@@ -10,9 +10,9 @@ use think\Cookie;
 class UserTim extends Controller
 {
 	#app基本信息
-	protected $sdkappid;
-	protected $usersig;
-	protected $identifier;
+	protected $sdkappid = 1400028629;
+	protected $usersig = 'eJxljsFOg0AURfd8BWFtzDAMFExctNjEpqilUFu6IcgMdNowTIZXsBj-XcUmkni357x374em67oRB9Ftluf1WUAKF8kM-U43kHHzB6XkNM0gtRT9B9m75IqlWQFMDdC0bRsjNHY4ZQJ4wa8G1KLszg2MjIae0qHm9wX5vseug72xwssBPs03-iL0**VaoulqNiNLFbd2vovwdtKenPBVymn2EjWo64JiH-hluChpYs3dI6mg2xRBHLUP-a7frw7ho6igPbI4WR*SLXHU23N3P6oEXrHrIM-0XDJx3RFtmWp4LQYBI9M2sYV*Ymif2hcpKF-D';
+	protected $identifier = 'tongwust';
 	protected $sig = '';
     
     const SDKAPPID = 1400028629;
