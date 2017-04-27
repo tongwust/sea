@@ -10,14 +10,14 @@ use think\Cookie;
 class UserTim extends Controller
 {
 	#app基本信息
-	protected $sdkappid = 1400028629;
-	protected $usersig = 'eJxljsFOg0AURfd8BWFtzDAMFExctNjEpqilUFu6IcgMdNowTIZXsBj-XcUmkni357x374em67oRB9Ftluf1WUAKF8kM-U43kHHzB6XkNM0gtRT9B9m75IqlWQFMDdC0bRsjNHY4ZQJ4wa8G1KLszg2MjIae0qHm9wX5vseug72xwssBPs03-iL0**VaoulqNiNLFbd2vovwdtKenPBVymn2EjWo64JiH-hluChpYs3dI6mg2xRBHLUP-a7frw7ho6igPbI4WR*SLXHU23N3P6oEXrHrIM-0XDJx3RFtmWp4LQYBI9M2sYV*Ymif2hcpKF-D';
-	protected $identifier = 'tongwust';
+	protected $sdkappid ;
+	protected $usersig ;
+	protected $identifier ;
 	protected $sig = '';
     
     const SDKAPPID = 1400028629;
-    const IDENTIFIER = 'eJxljsFOg0AURfd8BWFtzDAMFExctNjEpqilUFu6IcgMdNowTIZXsBj-XcUmkni357x374em67oRB9Ftluf1WUAKF8kM-U43kHHzB6XkNM0gtRT9B9m75IqlWQFMDdC0bRsjNHY4ZQJ4wa8G1KLszg2MjIae0qHm9wX5vseug72xwssBPs03-iL0**VaoulqNiNLFbd2vovwdtKenPBVymn2EjWo64JiH-hluChpYs3dI6mg2xRBHLUP-a7frw7ho6igPbI4WR*SLXHU23N3P6oEXrHrIM-0XDJx3RFtmWp4LQYBI9M2sYV*Ymif2hcpKF-D';
-    const USERSIG = 'tongwust';
+    const USERSIG = 'eJxljsFOg0AURfd8BWFtzDAMFExctNjEpqilUFu6IcgMdNowTIZXsBj-XcUmkni357x374em67oRB9Ftluf1WUAKF8kM-U43kHHzB6XkNM0gtRT9B9m75IqlWQFMDdC0bRsjNHY4ZQJ4wa8G1KLszg2MjIae0qHm9wX5vseug72xwssBPs03-iL0**VaoulqNiNLFbd2vovwdtKenPBVymn2EjWo64JiH-hluChpYs3dI6mg2xRBHLUP-a7frw7ho6igPbI4WR*SLXHU23N3P6oEXrHrIM-0XDJx3RFtmWp4LQYBI9M2sYV*Ymif2hcpKF-D';
+    const IDENTIFIER = 'tongwust';
     #开放IM https接口参数, 一般不需要修改
 	protected $http_type = 'https://';
 	protected $method = 'post';
@@ -26,12 +26,12 @@ class UserTim extends Controller
 	protected $contenttype = 'json';
 	protected $apn = '0';
 	
-	protected function initialize($sdkappid = SDKAPPID, $usersig = USERSIG, $identifier = IDENTIFIER)
+	public function __construct($sdkappid = self::SDKAPPID, $usersig = self::USERSIG, $identifier = self::IDENTIFIER)
     {
     	$this->sdkappid = $sdkappid;
     	$this->usersig = $usersig;
     	$this->identifier = $identifier;
-        parent::initialize();
+        parent::__construct();
     }
 	public function index(){
     	$view = new View();
@@ -233,31 +233,72 @@ class UserTim extends Controller
 		return json($ret);
 	}
     //create group
-    function group_create_group($group_type = 'Public', $group_name = 'work', $owner_id, $type = 1)
+    function group_create_group( $group_id, $group_type = 'Public', $group_name = 'work', $owner_id, $type = 1)
 	{
-		$group_type = input('group_type');
-		$group_name = input('group_name');
-		$owner_id = input('owner_id');
-		$type = input('type');//1:work,2:life
+//		$group_id = input('group_id');
+//		$group_type = input('group_type');
+//		$group_name = input('group_name');
+//		$owner_id = input('owner_id');
+//		$type = input('type');//1:work,2:life
 		$AppDefinedData = array(
 			"Key" => "g_type", // APP自定义的字段Key
         	"Value" => $type // 自定义字段的值
 		);
 		#构造高级接口所需参数
 		$info_set = array(
-				'group_id' => $owner_id.'$'.time(),
+				'group_id' => $group_id,
 				'introduction' => null,
 				'notification' => null,
 				'face_url' => null, 
 				'max_member_num' => 2000,
-//				'AppDefinedData' => array(), 
+				'AppDefinedData' => array(), 
 				);
 		$mem_list = array();
-//		array_push($info_set['AppDefinedData'], $AppDefinedData);
+		array_push($info_set['AppDefinedData'], $AppDefinedData);
 		$ret = $this->group_create_group2($group_type, $group_name, $owner_id, $info_set, $mem_list);
 		return json($ret);
 	}
+	
+	function group_get_appid_group_list()
+	{
+		#构造高级接口所需参数
+		$ret = $this->group_get_appid_group_list2(50, null, null);
+		return $ret;
+	}
+	
+	function group_get_appid_group_list2($limit, $offset, $group_type)
+	{
 
+		#构造新消息
+		$msg = array(
+				'Limit' => $limit,
+				'Offset' => $offset,
+				'GroupType' => $group_type
+				);  
+		#将消息序列化为json串
+		$req_data = json_encode($msg);
+	
+		$ret = $this->api("group_open_http_svc", "get_appid_group_list", $this->identifier, $this->usersig, $req_data);
+		$ret = json_decode($ret, true);
+		return $ret;
+	}
+	
+	function group_get_group_member_info($group_id, $limit, $offset)
+	{
+		#构造新消息
+		$msg = array(
+				"GroupId" => $group_id,
+				"Limit" => $limit,
+				"Offset" => $offset
+				);
+		#将消息序列化为json串
+		$req_data = json_encode($msg);
+	
+		$ret = $this->api("group_open_http_svc", "get_group_member_info", $this->identifier, $this->usersig, $req_data);
+		$ret = json_decode($ret, true);
+		return $ret;
+	}
+	
 	function group_create_group2($group_type, $group_name, $owner_id, $info_set, $mem_list)
 	{
 
@@ -266,7 +307,7 @@ class UserTim extends Controller
 				'Type' => $group_type,
 				'Name' => $group_name,
 				'Owner_Account' => $owner_id,
-//				'AppDefinedData' => $info_set['AppDefinedData'],
+				'AppDefinedData' => $info_set['AppDefinedData'],
 				'GroupId' => $info_set['group_id'], 
 				'Introduction' => $info_set['introduction'],
 				'Notification' => $info_set['notification'],
@@ -492,7 +533,7 @@ class UserTim extends Controller
 	 * $param bool $print_flag 是否打印请求，默认为打印
 	 * @return string $out 返回的签名字符串
 	 */
-	public function api($service_name, $cmd_name, $identifier, $usersig, $req_data, $print_flag = true)
+	public function api($service_name, $cmd_name, $identifier, $usersig, $req_data, $print_flag = false)
 	{   
 		//$req_tmp用来做格式化输出
 		$req_tmp = json_decode($req_data, true);

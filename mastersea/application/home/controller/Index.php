@@ -31,7 +31,7 @@ class Index extends Controller
 		return json($result);
 		exit;
     }
-    public function sendMsg(){
+    public function send_msg(){
     	$result = [
 			'r' => -1,
 			'msg' => '',
@@ -97,6 +97,10 @@ class Index extends Controller
 		$pwd = trim(input('pwd'));
 		$repwd = trim(input('repwd'));
 		$mobile = trim(input('mobile'));
+		$position_id = input('position_id');
+		$skill_ids = trim(input('skill_ids'));
+		$interest_ids = trim(input('interest_ids'));
+		
 		if($name == '' || $pwd == '' || $repwd == '' || $mobile == ''){
 			$result['r'] = -5;
 			$result['msg'] = '用户名 密码或邮箱不能为空！';
@@ -124,21 +128,44 @@ class Index extends Controller
 			exit;
 		}
 		//创建用户
-		$user->name = trim(input('name'));
-		$user->pwd = md5(trim(input('pwd')));
+		$user->name = $name;
+		$user->pwd = md5($pwd);
 		$user->status = 1;
-		$contract = model('Contract');
+		$user_contact = model('UserContact');
 		$user_info = model('UserInfo');
+		$user_tag = model('UserTag');
 		$user_info->position = input('position');
-		$contract->contract = $mobile;
-		$contract->type = 1;
+		$user_contact->contact = $mobile;
+		$user_contact->type = 1;
 		Db::startTrans();
 		try{
 			$user->save();
-			$contract->user_id = $user->user_id;
+			$user_contact->user_id = $user->user_id;
 			$user_info->user_id = $user->user_id;
-			$contract->save();
+			$user_contact->save();
 			$user_info->save();
+			if($position_id != '' && $position_id != null){
+				
+				$user_tag->user_id = $user->user_id;
+				$user_tag->tag_id = $position_id;
+				$user_tag->save();
+			}
+			$skill_arr = explode(',', $skill_ids);
+			if(count($skill_arr) > 0){
+				$skill_list = [];
+				for($i = 0; $i < count($skill_arr); $i++){
+					array_push($skill_list, ['user_id'=>$user->user_id,"tag_id"=>$skill_arr[$i]]);
+				}
+				$user_tag->save($skill_list);
+			}
+			$interest_arr = explode(',', $interest_ids);
+			if(count($interest_arr) > 0){
+				$interest_list = [];
+				for($i = 0; $i < count($interest_arr); $i++){
+					array_push($interest_list, ['user_id'=>$user->user_id,"tag_id"=>$interest_arr[$i]]);
+				}
+				$user_tag->save($interest_list);
+			}
 			Db::commit();
 		}catch(\Exception $e){
 			Db::rollback();
@@ -149,7 +176,6 @@ class Index extends Controller
 		$result['r'] = 0;
 		$result['mgs'] = '添加成功！';
 		return json($result);
-		//send email
 		//$this->email($user->name,$contract->email,md5($user->name.$user->pwd.$user->user_id),$user->user_id);
 	}
 	public function user_login(){
@@ -160,6 +186,7 @@ class Index extends Controller
 		$user = model('User');
 		$name = trim(input('name'));
 		$pwd = trim(input('pwd'));
+		$is_rember = input('is_rember');
 		if($name == '' || $pwd == ''){
 			$result['msg'] = '用户名或密码不能为空';
 			return json($result);
@@ -169,13 +196,15 @@ class Index extends Controller
 		if(count($res) > 0){
 			$result['r'] = 0;
 			$result['msg'] = '登陆成功';
-			session([
+			$session_config = [
 			    'prefix'     => 'think',
 			    'type'       => '',
 			    'auto_start' => true,
-			    'expire'	 => 7*24*3600,
+			    'expire'	 => 3600,
 			    'use_cookies'=> true,
-			]);
+			];
+			if($is_rember == 1)	$session_config['expire'] = 7*24*3600;
+			session($session_config);
 			session('user.name',$res[0]['name']);
 			session('user.user_id',$res[0]['user_id']);
 			
