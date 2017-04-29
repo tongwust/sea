@@ -17,6 +17,8 @@ class Index extends Controller
     	return $view->fetch('./index');
     }
     public function check(){
+    	header("Access-Control-Allow-Origin:*"); 
+    	header("Access-Control-Allow-Method:POST,GET");
     	$result = [
 			'r' => -1,
 			'msg' => '',
@@ -32,6 +34,8 @@ class Index extends Controller
 		exit;
     }
     public function send_msg(){
+    	header("Access-Control-Allow-Origin:*"); 
+    	header("Access-Control-Allow-Method:POST,GET");
     	$result = [
 			'r' => -1,
 			'msg' => '',
@@ -73,13 +77,15 @@ class Index extends Controller
 		}
     }
     public function check_code(){
+    	header("Access-Control-Allow-Origin:*"); 
+    	header("Access-Control-Allow-Method:POST,GET");
     	$result = [
 			'r' => -1,
 			'msg' => '',
 		];
     	$code = trim(input('code'));
     	$mobile = trim(input('mobile'));
-    	if(cache($mobile) == $code){
+    	if(cache($mobile) && cache($mobile) == $code && $code ){
     		$result['r'] = 0;
     		$result['msg'] = '验证通过';
     	}else{
@@ -88,6 +94,8 @@ class Index extends Controller
     	return json($result);
     }
 	public function register(){
+		header("Access-Control-Allow-Origin:*"); 
+    	header("Access-Control-Allow-Method:POST,GET");
 		$result = [
 			'r' => -1,
 			'msg' => '',
@@ -179,11 +187,15 @@ class Index extends Controller
 		//$this->email($user->name,$contract->email,md5($user->name.$user->pwd.$user->user_id),$user->user_id);
 	}
 	public function user_login(){
+		header("Access-Control-Allow-Origin:*"); 
+    	header("Access-Control-Allow-Method:POST,GET");
 		$result = [
 			'r' => -1,
 			'msg' => '',
 		];
 		$user = model('User');
+		$user_tim = new UserTim;
+		
 		$name = trim(input('name'));
 		$pwd = trim(input('pwd'));
 		$is_rember = input('is_rember');
@@ -207,13 +219,16 @@ class Index extends Controller
 			session($session_config);
 			session('user.name',$res[0]['name']);
 			session('user.user_id',$res[0]['user_id']);
-			
+			$ret = $user_tim->gen_sig($res[0]['user_id']);
+			cookie( 'sig', $ret['sig'], ['prefix' => 'think_', 'expire' => 179*24*3600]);
 		}else{
 			$result['msg'] = '用户名或密码错误';
 		}
 		return json($result);
 	}
 	public function user_logout(){
+		header("Access-Control-Allow-Origin:*"); 
+    	header("Access-Control-Allow-Method:POST,GET");
 		$result = [
 			'r' => -1,
 			'msg' => '',
@@ -223,6 +238,8 @@ class Index extends Controller
 		return json($result);
 	}
 	public function change_user_status(){
+		header("Access-Control-Allow-Origin:*"); 
+    	header("Access-Control-Allow-Method:POST,GET");
 		$str = input('str');
 		$user_id = input('id');
 		if($str == '' || $user_id){
@@ -234,7 +251,10 @@ class Index extends Controller
 			'status'=>1,
 		],['user_id'=>$user_id]);
 	}
+	
 	public function email($name,$toemail,$str,$user_id) {
+		header("Access-Control-Allow-Origin:*"); 
+    	header("Access-Control-Allow-Method:POST,GET");
         $subject='新注册账户激活邮件';
         $content='恭喜你，邮件发送成功。 <a href="'.url('home/index/change_user_status',['str'=>$str,'id'=>$user_id]).'">点此链接激活账号</a>';
         send_mail($toemail,$name,$subject,$content);

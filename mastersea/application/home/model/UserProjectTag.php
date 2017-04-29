@@ -3,7 +3,7 @@ namespace app\home\model;
 use think\Model;
 use think\Db;
 
-class ProjectTag extends Model{
+class UserProjectTag extends Model{
 	
 	protected $table = 'user_project_tag';
 	
@@ -17,5 +17,16 @@ class ProjectTag extends Model{
 		return $res;
 	}
 	
+	public function get_user_info_by_project_ids($project_ids_str){
+		
+		$sql = 'SELECT DISTINCT(upt.project_id),upt.user_id,u.name as username,s.src_name,s.path
+				FROM user_project_tag upt INNER JOIN user u ON upt.user_id = u.user_id
+					INNER JOIN src_relation sr ON sr.relation_id = u.user_id && sr.type = 3
+					INNER JOIN src s ON sr.src_id = s.src_id
+				WHERE upt.project_id in('.$project_ids_str.')';
+		$res = Db::query( $sql );
+		return $res;
+		
+	}
 }
 ?>

@@ -36,12 +36,13 @@ class UserTim extends Controller
 	public function index(){
     	$view = new View();
     	$user_id = 3;
-    	$nick = 'tim_'.$user_id;
+    	$username = 'tong';
+    	$nick = $username;
     	$face_url = '';
-    	$this->gen_sig('tim_'.$user_id);
-    	cookie('sig',$this->sig,['prefix' => 'think_', 'expire' => 179*24*3600]);
-    	$ret = $this->account_import('tim_'.$user_id,$nick,$face_url);//dump($ret);
-    	return $view->fetch('./chat/index',['user_id'=>'tim_'.$user_id,"user_sig"=>$this->sig]);
+    	$this->gen_sig( $user_id );
+    	cookie( 'sig', $this->sig, ['prefix' => 'think_', 'expire' => 179*24*3600]);
+    	$ret = $this->account_import( $user_id, $nick, $face_url);
+    	return $view->fetch( './chat/index', ['user_id' => $user_id, "user_sig" => $this->sig]);
     }
     
     public function open_msg_svc_get_history( $chat_type, $msg_time){
@@ -179,13 +180,13 @@ class UserTim extends Controller
 	function sns_friend_get_all($account_id)
 	{
 		#构造高级接口所需参数
-		$account_id = input('account_id');
+//		$account_id = input('account_id');
 		$tag_list = array(
 				"Tag_Profile_IM_Nick",
 				"Tag_SNS_IM_Remark"
 				);
 		$ret = $this->sns_friend_get_all2($account_id, $tag_list);
-		return json($ret);
+		return $ret;
 	}
 
 	function sns_friend_get_all2($account_id, $tag_list)
@@ -491,6 +492,7 @@ class UserTim extends Controller
     	$result = [
 			'r' => -1,
 			'msg' => '',
+			'sig' => '',
 		];
     	try{
 		    $api = new TLSSigAPI();
@@ -501,6 +503,7 @@ class UserTim extends Controller
 		    $api->SetPublicKey($public);
 		    $sig = $api->genSig($user_id);
 		    $this->sig = $sig;
+		    $result['sig'] = $sig;
 			$result['r'] = 0;
 		}catch(Exception $e){
 		    $result['msg'] = $e;

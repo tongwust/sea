@@ -15,6 +15,8 @@ class Project extends Controller{
 	}
 	
 	public function get_search_project_list(){
+		header("Access-Control-Allow-Origin:*"); 
+    	header("Access-Control-Allow-Method:POST,GET");
 		$ret = [ 
 			"r" => -1,
 			"msg" => '',
@@ -24,12 +26,28 @@ class Project extends Controller{
 		$user_id = input('user_id');
 		$search_content = input('search_content');
 		$project = model('Project');
+		$user_project_tag = model('UserProjectTag');
 		
 		if($search_content == '' || $search_content == null ){
 			
-			$res = $project->get_latest_hot_project();
+			$res = $project->get_latest_hot_project();dump($res);
 			$project_id_arr = array_column( $res, 'project_id');
 			
+			$project_str = implode(',',$project_id_arr);
+			$users = $user_project_tag->get_user_info_by_project_ids($project_str);dump($users);
+			foreach($res as $k => &$v){
+				foreach($users as $u){
+					if($v['project_id'] == $u['project_id'] ){
+						$v['user_id'] = $u['user_id'];
+						$v['username'] = $u['username'];
+						$v['src_name'] = $u['src_name'];
+						$v['path'] = $u['path'];
+						break;
+					}
+				}
+			}
+			$ret['data'] = json_encode($res);
+			$ret['r'] = 0;
 		}else{
 			
 		}
@@ -102,10 +120,10 @@ class Project extends Controller{
 		$project_end_time = input('project_end_time');
 		$intro = trim(input('intro'));
 		$skill_ids = trim(input('skill_ids'));
-		$tasks = json_decode(input('tasks'));
+		$tasks = json_decode(input('tasks'),true);
 		
 		$status = 0;	//待审
-		$create_time = now();
+//		$create_time = time();
 		$project = model('Project');
 		$task = model('Task');
 		$project_task = model('ProjectTask');
@@ -118,47 +136,61 @@ class Project extends Controller{
 		Db::startTrans();
 		
 		try{
+			$project->name = $name;
+			$project->type = $type;
+			$project->en_name = $en_name;
+			$project->cat_name = $cat_name;
+			$project->address = $address;
+			$project->project_start_time = $project_start_time;
+			$project->project_end_time = $project_end_time;
+			$project->intro = $intro;
+//			$project->create_time = $create_time;
 			$project->save();
 			$project_id = $project->project_id;
-			
-			$skill_arr = explode(',' $skill_ids);
+			$skill_arr = explode(',' , $skill_ids);
 			if(count($skill_arr) > 0){
 				$list = [];
 				for( $i = 0; $i < count($skill_arr); $i++){
-					array_push($list, ['user_id' = > $user_id,'project_id' => $project_id,'tag_id' => $skill_arr[$i]]);
+					array_push($list, ['user_id' => $user_id,'project_id' => $project_id,'tag_id' => $skill_arr[$i]]);
 				}
-				$user_project_tag->save($list);
+				$user_project_tag->saveAll($list);
 			}
+			$task_arr = [];
 			for($j = 0; $j < count($tasks); $j++){
+//				array_push($task_arr, ['title' => $tasks[$j]['title']]);
+//				$task->title = $tasks[$j]['title'];
+				$task->data(['title'=>$tasks[$j]['title']])->isUpdate(false)->save();
+//				($j == 0)?$task->save():$task->isUpdate()->save();
 				
-				$task->title = $tasks[$j]['title'];
-				$task->create_time = now();
-				$task->save();
-				$task_id = $task->task_id;
 				
-				$project_task->project_id = $project_id;
-				$project_task->task_id = $task_id;
-				$project_task->save();
+				$task_id = $task->task_id;dump($tasks[$j]);
 				
-				$user_task->user_id = $user_id;
-				$user_task->task_id = $task_id;
-				$user_task->save();
+//				$project_task->project_id = $project_id;
+//				$project_task->task_id = $task_id;
+				$project_task->data(['project_id'=>$project_id,'task_id'=>$task_id,'t_type'=>$tasks[$j]['type']])->isUpdate(false)->save();
+//				($j == 0)?$project_task->save():$project_task->isUpdate()->save();
 				
-				$src->src_name = $tasks[$j]['src_name'];
-				$src->type = $tasks[$j]['type'];
-				$src->src_order = $tasks[$j]['src_order'];
-				$src->path = $tasks[$j]['path'];
-				$src->status = $tasks[$j]['status'];
-				$src->create_time = now();
-				$src->save();
+//				$user_task->user_id = $user_id;
+//				$user_task->task_id = $task_id;
+//				($j == 0)?$user_task->save():$user_task->isUpdate()->save();
+				$user_task->data(['user_id'=>$user_id,'task_id'=>$task_id])->isUpdate(false)->save();
+//				$src->src_name = $tasks[$j]['src_name'];
+//				$src->type = $tasks[$j]['type'];
+//				$src->src_order = $tasks[$j]['src_order'];
+//				$src->path = $tasks[$j]['path'];
+//				$src->status = $tasks[$j]['status'];
+//				($j == 0)?$src->save():$src->isUpdate()->save();
+				$src->data(['src_name'=>$tasks[$j]['src_name'],'type'=>$tasks[$j]['type'],'src_order'=>$tasks[$j]['src_order'],'path'=>$tasks[$j]['path'],'status'=>$tasks[$j]['status']])->isUpdate(false)->save();
 				$src_id = $src->src_id;
-				
-				$src_relation->src_id = $src_id;
-				$src_relation->relation_id = $task_id;
-				$src_relation->type = 2;//任务
-				$src_relation->save();
-				
+//				
+//				$src_relation->src_id = $src_id;
+//				$src_relation->relation_id = $task_id;
+//				$src_relation->type = 2;//任务
+//				($j == 0)?$src_relation->save():$src_relation->isUpdate()->save();
+				$src_relation->data(['src_id'=>$src_id,'relation_id'=>$task_id,'type'=>2])->isUpdate(false)->save();
 			}
+//			$task->saveAll($task_arr);
+//			dump($task->task_id);
 			$user_tim->group_create_group($project_id,'Public', $name, $user_id, 1);// create group - 1:work 2:life
 			Db::commit();
 			$ret['r'] = 0;
@@ -166,7 +198,7 @@ class Project extends Controller{
 			$ret['project_id'] = $project_id;
 		}catch( \Exception $e){
 			Db::rollback();
-			$ret['msg'] = '添加数据异常';
+			$ret['msg'] = '添加数据异常'.$e;
 		}
 		return json($ret);
 	}

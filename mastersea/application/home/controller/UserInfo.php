@@ -73,7 +73,7 @@ class UserInfo extends Controller
     	$education_school = input('education_school');
     	$history = input('history');
     	$intro = input('intro');
-    	$contact = json_decode(input('contact'));
+    	$contact = json_decode(input('contact'),true);
     	$latest_update_time = now();
 //  	$user = new User;
     	$user_info = model('UserInfo');
