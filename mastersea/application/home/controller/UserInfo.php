@@ -12,17 +12,47 @@ class UserInfo extends Controller
     	$view = new View();
     	return $view->fetch('./index');
     }
-    
+    public function get_user_part_info(){
+    	$ret = [
+    		'r' => 0,
+    		'msg' => '查询成功',
+    	];
+    	$user_id = input('user_id');
+    	if( $user_id > 0 ){
+    		$user_info = model('UserInfo');
+    		$user_attention = model('UserAttention');
+    		$user_project_tag = model('UserProjectTag');
+    		
+    		$user_res = $user_info->get_user_detail_by_id();dump($res);
+    		if(count($res) > 0){
+    			$ret = array_merge( $ret, $res[0]);
+    			
+    			$atten_res = $user_attention->get_follow_users_by_id();
+    			$project_res = $user_project_tag->get_project_by_userid();
+    			
+    			$ret['follow_num'] = count($atten_res);
+    			$ret['project_num'] = count($project_res);
+    		}else{
+    			$ret['r'] = -2;
+    			$ret['msg'] = '没有查询到user_id信息';
+    		}
+    		
+    	}else{
+    		$ret['r'] = -1;
+    		$ret['msg'] = '参数user_id不符合要求';
+    	}
+    	return json_encode($ret);
+    }
     public function get_user_info(){
     	$ret = [
 			'r' => -1,
 			'msg' => '',
-			'data' => '',
-			'position' => '',
-			'skill' => '',
-			'interest' => '',
-			'contact' => '',
-			'language' => '',
+			'data' => [],
+			'position' => [],
+			'skill' => [],
+			'interest' => [],
+			'contact' => [],
+			'language' => [],
 		];
 		$user_id = input('user_id');
     	$user_info = model('UserInfo');

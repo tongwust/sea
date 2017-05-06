@@ -8,7 +8,11 @@
 // +----------------------------------------------------------------------
 // | Author: 流年 <liu21st@gmail.com>
 // +----------------------------------------------------------------------
-
+function interface_log($content){
+	$datefile = date('Y-m-d',time());
+	$file = ROOT_PATH.'/public/log/log'.$datefile.'.log';
+	file_put_contents ( $file ,  $content ,  FILE_APPEND  |  LOCK_EX );
+}
 // 应用公共文件
 /**
  * 系统邮件发送函数
@@ -20,8 +24,6 @@
  * @return boolean
  * @author static7 <static7@qq.com>
  */
-//use PHPMailer\PHPMailer\PHPMailer;
-//use PHPMailer\PHPMailer\Exception;
 use phpmailer\PHPMailer;
 use phpmailer\SMTP;
 

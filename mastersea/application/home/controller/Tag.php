@@ -45,24 +45,29 @@ class Tag extends Controller{
 	
 	public function t(){
 		
-		$HttpUrl="cvm.api.qcloud.com";
-		$HttpMethod="GET"; 
-		$isHttps =true;
+		$HttpUrl = "yunsou.api.qcloud.com";
+		$HttpMethod = "GET";
+		$isHttps = true;
 		$secretKey='DEC2hJk4B622r9QiokV7YoskQuDNPL8s';
+		
+		$tag = model('Tag');
 		
 		$COMMON_PARAMS = array(
 	        'Nonce'=> rand(),
 	        'Timestamp'=>time(NULL),
-	        'Action'=>'DescribeInstances',
+	        'Action'=>'DataManipulation',
 	        'SecretId'=> 'AKIDSoqmX0Wk282oPswIH5hicT8br7DEDg7N',
-	        'Region' =>'gz',
+	        'Region' =>'bj',
+	        'op_type' => 'add',
+	        'appId' => '58260002',
 		);
-		
-		$PRIVATE_PARAMS = array(
-       		'instanceIds.0'=> 'qcvm00001',
-        	'instanceIds.1'=> 'qcvm00002',
-		);
-		
+		$content = $tag->get_tag_by_themeid();//dump(json_encode($content));
+		$PRIVATE_PARAMS = [];
+		foreach($content as $k => $v){
+			$PRIVATE_PARAMS['contents.'.$k.'.name'] = $v['name'];
+			$PRIVATE_PARAMS['contents.'.$k.'.tagid'] = $v['tagid'];
+			$PRIVATE_PARAMS['contents.'.$k.'.themeid'] = $v['themeid'];
+		}
 		$this->CreateRequest($HttpUrl,$HttpMethod,$COMMON_PARAMS,$secretKey, $PRIVATE_PARAMS, $isHttps);
 	}
 	
@@ -122,19 +127,18 @@ class Tag extends Controller{
         {
             $Req="http://".$FullHttpUrl."?".$Req;
         }
-
         $Rsp = file_get_contents($Req);
-
+		dump($Req);
     }
     else
     {
         if($isHttps === true)
         {
-            $Rsp= SendPost("https://".$FullHttpUrl,$Req,$isHttps);
+            $Rsp= $this->SendPost("https://".$FullHttpUrl,$Req,$isHttps);
         }
         else
         {
-            $Rsp= SendPost("http://".$FullHttpUrl,$Req,$isHttps);
+            $Rsp= $this->SendPost("http://".$FullHttpUrl,$Req,$isHttps);
         }
     }
 

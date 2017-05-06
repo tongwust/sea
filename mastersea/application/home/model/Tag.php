@@ -9,7 +9,7 @@ class Tag extends Model{
 	public function get_tag_by_themeid(){
 		$tag_id = input('tag_id');
 		$themeid = input('themeid');
-		$sql = 'SELECT ti.tag_id,ti.name
+		$sql = 'SELECT ti.name,ti.tag_id as tagid,t.themeid
 				FROM tag_info AS ti LEFT JOIN tag AS t ON ti.tag_id = t.tag_id
 				WHERE t.pid = :tag_id && t.themeid = :themeid';
 		$res = Db::query($sql,["tag_id"=>$tag_id,"themeid"=>$themeid]);

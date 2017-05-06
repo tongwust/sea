@@ -14,27 +14,55 @@ class Project extends Controller{
 		return $view->fetch('./test/upload');
 	}
 	
+	public function get_members_info_by_project_id(){
+		$ret = [ 
+			"r" => 0,
+			"msg" => '',
+			'member_list' => [],
+		];
+		$project_id = input('project_id');
+		
+		if( $project_id > 0){
+			$user_project_tag = model('UserProjectTag');
+			$res = $user_project_tag->getMemberInfoByProjectId();
+			$arr = [];
+			foreach($res as $k => $v){
+				$arr[$v['user_id']] = $v;
+			}
+			$ret['member_list'] = $arr;
+		}else{
+			$ret['r'] = -1;
+			$ret['msg'] = '参数不符合要求';
+		}
+		return json_encode($ret);
+	}
+	
 	public function get_search_project_list(){
 		header("Access-Control-Allow-Origin:*"); 
     	header("Access-Control-Allow-Method:POST,GET");
 		$ret = [ 
 			"r" => -1,
 			"msg" => '',
-			'data' => '',
+			'project_list' => [],
 		];
-		
 		$user_id = input('user_id');
 		$search_content = input('search_content');
 		$project = model('Project');
 		$user_project_tag = model('UserProjectTag');
 		
-		if($search_content == '' || $search_content == null ){
+		if( empty($search_content) ){
 			
-			$res = $project->get_latest_hot_project();dump($res);
+			$res = $project->get_latest_hot_project();
 			$project_id_arr = array_column( $res, 'project_id');
 			
 			$project_str = implode(',',$project_id_arr);
-			$users = $user_project_tag->get_user_info_by_project_ids($project_str);dump($users);
+			$users = $user_project_tag->get_user_info_by_project_ids( $project_str );
+			$members = $user_project_tag->get_project_members( $project_str );
+			$member_num_arr = array();
+			foreach( $members as $v){
+				$member_num_arr[$v['project_id']] = isset($member_num_arr[$v['project_id']])?$member_num_arr[$v['project_id']] + 1:1;
+				
+			}
 			foreach($res as $k => &$v){
 				foreach($users as $u){
 					if($v['project_id'] == $u['project_id'] ){
@@ -45,20 +73,27 @@ class Project extends Controller{
 						break;
 					}
 				}
+				foreach($member_num_arr as $p => $val){
+					if( $v['project_id'] == $p){
+						$v['member_num'] = $val;
+						break;
+					}
+				}
 			}
-			$ret['data'] = json_encode($res);
+			$ret['project_list'] = $res;
 			$ret['r'] = 0;
+			$ret['msg'] = '获取成功';
 		}else{
 			
 		}
-		return json($ret);
+		return json_encode($ret);
 	}
 	
 	public function get_project_detail_by_id(){
 		$ret = [ 
 			"r" => -1,
 			"msg" => '',
-			'data' => '',
+			'data' => [],
 		];
 		
 		$project_id = input('project_id');
