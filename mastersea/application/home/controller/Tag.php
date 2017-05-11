@@ -59,16 +59,42 @@ class Tag extends Controller{
 		return json($result);
 	}
 	
-	public function add(){
+	public function add_province(){
+		exit;
+		$p = model('Province');
+		
+		$res = $p->getAllProvince();
+		//dump( $res );
+		foreach($res as $v){
+			
+			$this->add( 41, $v['province'], 14);
+		}
+	}
+	public function add_city(){
+		exit;
+		$c = model('City');
+		$res = $c->getAllCity( 140000 );//山西
+//		foreach($res as $v){
+//			//$v['short_name'] = $v['city'];
+//			dump(mb_substr( $v['city'], 0, mb_strlen($v['city'])-1, 'utf-8'));echo $v['city'];exit;
+//		}
+		dump($res);
+		foreach( $res as $v){
+			
+			$this->add( 45, $v['city'],mb_substr( $v['city'], 0, mb_strlen($v['city'])-1, 'utf-8'), 14);
+		}
+		
+	}
+	public function add( $pid, $name, $short_name, $themeid){
 		$result = [
 			'r' => -1,
 			'msg' => '',
 		];
-		$pid = input('pid');
-		$name = input('name');
-		$themeid = empty(input('themeid'))?1:input('themeid');
+//		$pid = input('pid');
+//		$name = input('name');
+//		$themeid = empty(input('themeid'))?1:input('themeid');
 		if($pid > 0){
-			$res = Db::query('call addTag(:pid,:name,:themeid)',['pid'=>$pid,'name'=>$name,'themeid'=>$themeid]);
+			$res = Db::query('call addTag(:pid,:name,:short_name,:themeid)',['pid'=>$pid,'name'=>$name,'short_name'=>$short_name,'themeid'=>$themeid]);
 			if(count($res) > 0 && $res[0][0]['result'] == 1000){
 				$result['r'] = 0;
 				$result['msg']  = '添加成功';
@@ -110,7 +136,7 @@ class Tag extends Controller{
 		];
 		$pid = input('pid');
 		$tid = input('tid');
-		if( $pid > 0 && $tid > 0){
+		if( $pid > 0 && $tid > 0 ){
 			$res = Db::query('call moveTag(:pid,:tid)',['pid'=>$pid,'tid'=>$tid]);
 			if(count($res) > 0 && $res[0][0]['result'] == 1000){
 				$result['r'] = 0;

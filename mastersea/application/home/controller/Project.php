@@ -273,30 +273,16 @@ class Project extends Controller{
 				$src->data( $cover_arr )->isUpdate(false)->save();
 				$src_relation->data([ 'src_id' => $src->src_id, 'relation_id' => $project_id, 'type' => $v['type']])->isUpdate(false)->save();//项目3
 			}
-			$task_arr = [];
 			for($j = 0; $j < count($tasks); $j++){
-//				array_push($task_arr, ['title' => $tasks[$j]['title']]);
-//				$task->title = $tasks[$j]['title'];
-				$task->data(['title'=>$tasks[$j]['title']])->isUpdate(false)->save();
-//				($j == 0)?$task->save():$task->isUpdate()->save();
+
+				$task->data(['title'=>$tasks[$j]['title'],'description' => $tasks[$j]['description'] ])->isUpdate(false)->save();
 				
 				$task_id = $task->task_id;
 				
-//				$project_task->project_id = $project_id;
-//				$project_task->task_id = $task_id;
-				$project_task->data(['project_id'=>$project_id,'task_id'=>$task_id,'t_type'=>$tasks[$j]['type']])->isUpdate(false)->save();
-//				($j == 0)?$project_task->save():$project_task->isUpdate()->save();
-				
-//				$user_task->user_id = $user_id;
-//				$user_task->task_id = $task_id;
-//				($j == 0)?$user_task->save():$user_task->isUpdate()->save();
+				$project_task->data(['project_id'=>$project_id,'task_id'=>$task_id])->isUpdate(false)->save();
+
 				$user_task->data(['user_id'=>$user_id,'task_id'=>$task_id])->isUpdate(false)->save();
-//				$src->src_name = $tasks[$j]['src_name'];
-//				$src->type = $tasks[$j]['type'];
-//				$src->src_order = $tasks[$j]['src_order'];
-//				$src->path = $tasks[$j]['path'];
-//				$src->status = $tasks[$j]['status'];
-//				($j == 0)?$src->save():$src->isUpdate()->save();
+
 				$info = pathinfo($tasks[$j]['resource_path']);
 				$path_arr = explode('/', $info['dirname']);
 				$src_arr = [
@@ -312,15 +298,9 @@ class Project extends Controller{
 							];
 				$src->data( $src_arr )->isUpdate(false)->save();
 				$src_id = $src->src_id;
-//				
-//				$src_relation->src_id = $src_id;
-//				$src_relation->relation_id = $task_id;
-//				$src_relation->type = 2;//任务
-//				($j == 0)?$src_relation->save():$src_relation->isUpdate()->save();
+
 				$src_relation->data(['src_id'=>$src_id,'relation_id'=>$task_id,'type'=>2])->isUpdate(false)->save();
 			}
-//			$task->saveAll($task_arr);
-//			dump($task->task_id);
 //			$user_tim->group_create_group($project_id,'Public', $name, $user_id, 1);// create group - 1:work 2:life
 			Db::commit();
 			$ret['r'] = 0;
@@ -349,6 +329,8 @@ class Project extends Controller{
 			
 		}
 	}
+	
+	
 	
 }
 

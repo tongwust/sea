@@ -11,7 +11,7 @@ class Comment extends Controller{
 	public function index(){
 		
 	}
-	
+	//评论添加
 	public function add(){
 		$ret = [
 			'r' => 0,
@@ -20,7 +20,6 @@ class Comment extends Controller{
 		$pid = input('pid');
 		$cid = input('cid');
 		$type = input('type');
-		$by_user_id = input('by_user_id');
 		$user_id = input('user_id');
 		$content = trim(input('content'));
 		

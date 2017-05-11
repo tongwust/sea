@@ -28,6 +28,20 @@ class Project extends Model{
 		
 	}
 	
+	public function updatePraiseNum( $opt ){
+		
+//		$sql = 'UPDATE project 
+//				SET praise_num = praise_num + 1
+//				WHERE project_id = :project_id';
+//		$res = Db::query( $sql, ['project_id' => input('cid')]);
+		if( $opt = 1 ){
+			$res = Db::table('project')->where('project_id', input('cid'))->setInc('praise_num');
+		}else{
+			$res = Db::table('project')->where('project_id', input('cid'))-where('praise_num', '>', 0)->setDec('praise_num');
+		}
+		return $res;
+	}
+	
 }
 
 ?>

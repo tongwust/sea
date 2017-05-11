@@ -36,5 +36,16 @@ class SrcRelation extends Model{
 		
 		return $res;
 	}
+	
+	public function deleteByTaskid(){
+		
+		$sql = 'DELETE sr,s
+				FROM src_relation AS sr LEFT JOIN src AS s ON sr.src_id = s.src_id
+				WHERE sr.relation_id = :relation_id && sr.type = 2';
+				
+		$res = Db::query( $sql, ['relation_id' => input('task_id')] );
+		return $res;
+	}
+	
 }
 ?>
