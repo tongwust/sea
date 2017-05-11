@@ -37,6 +37,41 @@ class Project extends Controller{
 		return json_encode($ret);
 	}
 	
+	public function delete_member_from_project(){
+		
+		$ret = [
+			'r' => 0,
+			'msg' => '删除成功',
+		];
+		$opt_id = input('opt_id');
+		$member_id = input('member_id');
+		$project_id = input('project_id');
+		if( $opt_id > 0 && $member_id > 0 && $project_id > 0){
+			
+			$user_project_tag = model('UserProjectTag');
+			$user_type_arr = $user_project_tag->getMemberType();
+			$flag = false;
+			foreach( $user_type_arr as $v){
+				if( $v['user_type'] == 1){
+					$flag = true;	break;
+				}
+			}
+			if( $flag ){//1.负责人
+				
+				$user_project_tag->deleteMemberFromProject();
+			}else{
+				$ret['r'] = -2;
+				$ret['msg'] = '操作人不是负责人';
+			}
+		}else{
+			$ret['r'] = -1;
+			$ret['msg'] = '参数不符合要求';
+		}
+		return json_encode( $ret );
+	}
+	
+	
+	
 	public function get_search_project_list(){
 		header("Access-Control-Allow-Origin:*"); 
     	header("Access-Control-Allow-Method:POST,GET");
@@ -89,8 +124,39 @@ class Project extends Controller{
 		return json_encode($ret);
 	}
 	
-	public function get_project_detail_by_id(){
+	public function get_project_baseinfo(){
 		$ret = [ 
+			"r" => 0,
+			"msg" => '查询成功',
+			'project' => [],
+		];
+		$project_id = input('project_id');
+		$user_id = input('user_id');
+		if( $project_id <= 0 && $user_id <= 0){
+			$ret['r'] = -1;
+			$ret['msg'] = '参数不符合要求';
+			return json_decode($ret);
+			exit;
+		}
+		$project = model('Project');
+		$user_project_tag = model('UserProjectTag');
+		$src_relation = model('SrcRelation');
+		$project_tag = model('ProjectTag');
+		
+		$projectInfo = $project->get_project_by_id();
+		$tags = $user_project_tag->get_tag_by_userid_projectid();
+		$srcs = $src_relation->getSrcinfo( $project_id, 1, 1);
+		$address = $project_tag->get_tag_by_project_id();
+		
+		$ret['project'] = (count($projectInfo) > 0)?array_merge( $ret['project'], $projectInfo[0]):[];
+		$ret['project']['tags'] = (count($tags)> 0)?$tags:[];
+		$ret['project']['srcs'] = (count($srcs)> 0)?$srcs:[];
+		$ret['project']['address'] = (count($address) > 0)?$address[0]:[];
+		return json_encode( $ret );
+	}
+	
+	public function get_task_detail_by_projectid(){
+		$ret = [
 			"r" => -1,
 			"msg" => '',
 			'data' => [],
@@ -105,8 +171,8 @@ class Project extends Controller{
 			$project_task = model('ProjectTask');
 			$src_relation = model('SrcRelation');
 			$comment = model('Comment');
-			
-			$ret['data'] = $res;
+//			$res = $project->get_project_by_id();
+//			$ret['data'] = $res;
 			$ret['data']['skill'] = $user_project_tag->get_tag_by_userid_projectid();
 			$tasks = $project_task->get_task_src_comment_by_project_id();
 			if( count($tasks) > 0){
@@ -134,10 +200,11 @@ class Project extends Controller{
 				$ret['data']['tasks'] = $tasks;
 			}
 			$ret['r'] = 0;
+			$ret['msg'] = '查询成功';
 		}else{
 			$ret['msg'] = '参数不符合要求';
 		}
-		return json($ret);
+		return json_encode($ret);
 	}
 	
 	public function add(){
@@ -156,9 +223,9 @@ class Project extends Controller{
 		$intro = trim(input('intro'));
 		$skill_ids = trim(input('skill_ids'));
 		$tasks = json_decode(input('tasks'),true);
+		$cover = json_decode(input('cover'),true);
 		
 		$status = 0;	//待审
-//		$create_time = time();
 		$project = model('Project');
 		$task = model('Task');
 		$project_task = model('ProjectTask');
@@ -169,7 +236,6 @@ class Project extends Controller{
 		$user_tim = new UserTim;
 		
 		Db::startTrans();
-		
 		try{
 			$project->name = $name;
 			$project->type = $type;
@@ -179,8 +245,8 @@ class Project extends Controller{
 			$project->project_start_time = $project_start_time;
 			$project->project_end_time = $project_end_time;
 			$project->intro = $intro;
-//			$project->create_time = $create_time;
 			$project->save();
+			
 			$project_id = $project->project_id;
 			$skill_arr = explode(',' , $skill_ids);
 			if(count($skill_arr) > 0){
@@ -188,7 +254,24 @@ class Project extends Controller{
 				for( $i = 0; $i < count($skill_arr); $i++){
 					array_push($list, ['user_id' => $user_id,'project_id' => $project_id,'tag_id' => $skill_arr[$i]]);
 				}
-				$user_project_tag->saveAll($list);
+				$user_project_tag->saveAll( $list );
+			}
+			foreach( $cover as $v ){
+				$info = pathinfo($v['resource_path']);
+				$path_arr = explode('/', $info['dirname']);
+				$cover_arr = [
+							'src_name'=> $info['basename'],
+							'type'=> $v['type'],
+							'src_order'=> $v['src_order'],
+							'path'=> '/' . $path_arr[count($path_arr) - 1],
+							'access_url'=>$v['access_url'],
+							'access_url'=>$v['resource_path'],
+							'access_url'=>$v['url'],
+							'access_url'=>$v['source_url'],
+							'status'=>$v['status']
+							];
+				$src->data( $cover_arr )->isUpdate(false)->save();
+				$src_relation->data([ 'src_id' => $src->src_id, 'relation_id' => $project_id, 'type' => $v['type']])->isUpdate(false)->save();//项目3
 			}
 			$task_arr = [];
 			for($j = 0; $j < count($tasks); $j++){
@@ -197,8 +280,7 @@ class Project extends Controller{
 				$task->data(['title'=>$tasks[$j]['title']])->isUpdate(false)->save();
 //				($j == 0)?$task->save():$task->isUpdate()->save();
 				
-				
-				$task_id = $task->task_id;dump($tasks[$j]);
+				$task_id = $task->task_id;
 				
 //				$project_task->project_id = $project_id;
 //				$project_task->task_id = $task_id;
@@ -215,7 +297,20 @@ class Project extends Controller{
 //				$src->path = $tasks[$j]['path'];
 //				$src->status = $tasks[$j]['status'];
 //				($j == 0)?$src->save():$src->isUpdate()->save();
-				$src->data(['src_name'=>$tasks[$j]['src_name'],'type'=>$tasks[$j]['type'],'src_order'=>$tasks[$j]['src_order'],'path'=>$tasks[$j]['path'],'status'=>$tasks[$j]['status']])->isUpdate(false)->save();
+				$info = pathinfo($tasks[$j]['resource_path']);
+				$path_arr = explode('/', $info['dirname']);
+				$src_arr = [
+							'src_name' => $info['basename'],
+							'type' => $tasks[$j]['type'],
+							'src_order' => $tasks[$j]['src_order'],
+							'path' => '/' . $path_arr[count($path_arr) - 1],
+							'access_url' => $tasks[$j]['access_url'],
+							'access_url' => $tasks[$j]['resource_path'],
+							'access_url' => $tasks[$j]['url'],
+							'access_url' => $tasks[$j]['source_url'],
+							'status' => $tasks[$j]['status']
+							];
+				$src->data( $src_arr )->isUpdate(false)->save();
 				$src_id = $src->src_id;
 //				
 //				$src_relation->src_id = $src_id;
@@ -226,7 +321,7 @@ class Project extends Controller{
 			}
 //			$task->saveAll($task_arr);
 //			dump($task->task_id);
-			$user_tim->group_create_group($project_id,'Public', $name, $user_id, 1);// create group - 1:work 2:life
+//			$user_tim->group_create_group($project_id,'Public', $name, $user_id, 1);// create group - 1:work 2:life
 			Db::commit();
 			$ret['r'] = 0;
 			$ret['msg'] = '创建项目成功';

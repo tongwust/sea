@@ -7,6 +7,16 @@ class UserTag extends Model{
 	
 	protected $table = 'user_tag';
 	
+	public function get_address_position_skill_interest_by_userid(){
+		$user_id = input('user_id');
+		$sql = 'SELECT ut.tag_id,t.themeid,t.pid,ti.name
+				FROM user_tag AS ut LEFT JOIN tag AS t ON ut.tag_id = t.tag_id
+					LEFT JOIN tag_info AS ti ON t.tag_id = ti.tag_id
+				WHERE ut.user_id = :user_id';
+		$res = Db::query($sql, ['user_id' => $user_id]);
+		return $res;
+	}
+	
 	public function delete_user_tag( $pid, $themeid){
 		$user_id = input('user_id');
 		$sql = 'DELETE ut 

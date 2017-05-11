@@ -22,21 +22,23 @@ class UserInfo extends Controller
     		$user_info = model('UserInfo');
     		$user_attention = model('UserAttention');
     		$user_project_tag = model('UserProjectTag');
+    		$user_tag = model('UserTag');
     		
-    		$user_res = $user_info->get_user_detail_by_id();dump($res);
-    		if(count($res) > 0){
-    			$ret = array_merge( $ret, $res[0]);
-    			
+    		$user_res = $user_info->get_user_detail_by_id();
+    		if(count($user_res) > 0){
+    			$ret = array_merge( $ret, $user_res[0]);
     			$atten_res = $user_attention->get_follow_users_by_id();
     			$project_res = $user_project_tag->get_project_by_userid();
     			
+    			$tag_res = $user_tag->get_address_position_skill_interest_by_userid();
+    			$ret['tags'] = $tag_res;
     			$ret['follow_num'] = count($atten_res);
     			$ret['project_num'] = count($project_res);
     		}else{
     			$ret['r'] = -2;
     			$ret['msg'] = '没有查询到user_id信息';
     		}
-    		
+
     	}else{
     		$ret['r'] = -1;
     		$ret['msg'] = '参数user_id不符合要求';
@@ -110,11 +112,7 @@ class UserInfo extends Controller
     	$user_contact = model('UserContact');
     	$user_tag = model('UserTag');
     	if($user_id > 0){
-//  		if($name == ''){
-//  			$result['msg'] = '用户名不能为空';
-//	    		return json($result);
-//	    		exit;
-//  		}
+
     		Db::startTrans();
     		try{
 //  			$user->allowField(['name'])->save($_POST,['user_id'=>$user_id]);
@@ -126,7 +124,7 @@ class UserInfo extends Controller
     			$position_arr = explode(',' , $position_ids);
     			$position_list = [];
     			for($i = 0; $i < count($position_arr); $i++){
-    				array_push($position_list,['user_id'=>$user_id,'tag_id' => $position_arr[$i]]);
+    				array_push($position_list,['user_id'=>$user_id,'tag_id' => $position_arr[$i],'user_tag_type'=>1]);
     			}
     			$user_tag->delete_user_tag( 22, 10);//职业
     			$user_tag->saveAll($position_list);
@@ -134,7 +132,7 @@ class UserInfo extends Controller
     			$language_arr = explode(',' , $language_ids);
     			$language_list = [];
     			for($i = 0; $i < count($language_arr); $i++){
-    				array_push($language_list,['user_id'=>$user_id, 'tag_id' => $language[$i]]);
+    				array_push($language_list,['user_id'=>$user_id, 'tag_id' => $language[$i],'user_tag_type'=>2]);
     			}
     			$user_tag->delete_user_tag( 32, 13);//工作语言
     			$user_tag->saveAll($language_list);
@@ -142,7 +140,7 @@ class UserInfo extends Controller
     			$skill_arr = explode(',' , $skill_ids);
     			$skill_list = [];
     			for($i = 0; $i < count($skill_arr); $i++){
-    				array_push($skill_list,['user_id'=>$user_id, 'tag_id' => $skill[$i]]);
+    				array_push($skill_list,['user_id'=>$user_id, 'tag_id' => $skill[$i],'user_tag_type'=>3]);
     			}
     			$user_tag->delete_user_tag( 30, 11);//技能
     			$user_tag->saveAll($skill_list);
