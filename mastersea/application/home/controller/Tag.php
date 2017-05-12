@@ -85,48 +85,46 @@ class Tag extends Controller{
 		}
 		
 	}
-	public function add( $pid, $name, $short_name, $themeid){
-		$result = [
-			'r' => -1,
-			'msg' => '',
-		];
-//		$pid = input('pid');
-//		$name = input('name');
-//		$themeid = empty(input('themeid'))?1:input('themeid');
-		if($pid > 0){
-			$res = Db::query('call addTag(:pid,:name,:short_name,:themeid)',['pid'=>$pid,'name'=>$name,'short_name'=>$short_name,'themeid'=>$themeid]);
-			if(count($res) > 0 && $res[0][0]['result'] == 1000){
-				$result['r'] = 0;
-				$result['msg']  = '添加成功';
-			}else{
-				$result['msg'] = '添加失败';
-			}
-		}else{
-			$result['msg'] = 'pid 参数不符合要求';
-		}
-		return json($result);
-		exit;
-	}
-	
-	public function del(){
-		$result = [
-			'r' => -1,
-			'msg' => '',
+	public function tag_add( $pid, $name, $short_name, $themeid){
+		$ret = [
+			'r' => 0,
+			'msg' => '添加成功',
 		];
 		$pid = input('pid');
-		if($pid > 0){
-			$res = Db::query('call delTag(:pid)',['pid'=>$pid]);
-			if(count($res) > 0 && $res[0][0]['result'] == 1000){
-				$result['r'] = 0;
-				$result['msg'] = '删除成功';
-			}else{
-				$result['msg'] = '删除失败';
+		$name = input('name');
+		$short_name = input('short_name');
+		$themeid = empty(input('themeid'))?1:input('themeid');
+		if( $pid > 0 ){
+			$res = Db::query('call addTag(:pid,:name,:short_name,:themeid)',['pid'=>$pid,'name'=>$name,'short_name'=>$short_name,'themeid'=>$themeid]);
+			if(!(count($res) > 0 && $res[0][0]['result'] == 1000)){
+				$ret['r'] = -2;
+				$ret['msg'] = '添加失败';
 			}
 		}else{
-			$result['msg'] = 'pid 参数不符合要求';
+			$ret['r'] = -1;
+			$ret['msg'] = '参数不符合要求';
 		}
-		return json($result);
-		exit;
+		return json_encode($ret);
+	}
+	
+	public function tag_del(){
+		$ret = [
+			'r' => 0,
+			'msg' => '删除成功',
+		];
+		$pid = input('pid');
+		$themeid = input('themeid');
+		if($pid > 0){
+			$res = Db::query('call delTag(:pid, :themeid)',['pid'=>$pid, 'themeid' => $themeid]);
+			if(!(count($res) > 0 && $res[0][0]['result'] == 1000)){
+				$ret['r'] = -2;
+				$ret['msg'] = '删除失败';
+			}
+		}else{
+			$ret['r'] = -1;
+			$ret['msg'] = 'pid 参数不符合要求';
+		}
+		return json_encode( $ret );
 	}
 	
 	public function move(){

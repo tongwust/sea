@@ -3,27 +3,26 @@ namespace app\home\model;
 use think\Model;
 use think\Db;
 
-class Praise extends Model{
+
+class Collect extends Model{
 	
-	protected $table = 'praise';
+	protected $table = 'collect';
 	
-//	public function add_praise(){
+//	public function add_collect(){
 //		
-//		$sql = 'INSERT INTO praise( cid, type, user_id) VALUES( :cid, :type, :user_id)';
+//		$sql = 'INSERT INTO collect( cid, type, user_id) VALUES( :cid, :type, :user_id)';
 //		$res = Db::query( $sql, ['cid' => input('cid'), 'type' => input('type'), 'user_id' => input('user_id')]);
 //		
 //		return $res;
 //	}
-//	
-//	public function del_praise(){
+//
+//	public function del_collect(){
 //		
-//		$sql = 'DELETE FROM praise WHERE cid = :cid && user_id = :user_id && type = :type';
+//		$sql = 'DELETE FROM collect WHERE cid = :cid && user_id = :user_id && type = :type';
 //		$res = Db::query( $sql, ['cid' => input('cid'), 'user_id' => input('user_id'), 'type' => input('type')]);
 //		
 //		return $res;
 //	}
-	
 }
-
 
 ?>

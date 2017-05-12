@@ -59,7 +59,7 @@ class CosCloud extends Controller{
 		$random = intval( (mt_rand()/mt_getrandmax())*pow(2, 32) );
 		$now = time();
 		$e = 0;
-		$path = input('fileid');
+		$path = input('resource_path');
 		$once_str = 'a='.$this->appid.'&k='.$this->secret_id.'&e='.$e.'&t='.$now.'&r='.$random.'&f='.$path.'&b='.$this->bucket;
 		
 		$once_sig = base64_encode(hash_hmac('SHA1', $once_str, $this->secret_key, true).$once_str);

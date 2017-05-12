@@ -8,8 +8,8 @@ use think\Config;
 use think\Loader;
 
 class SrcRelation extends Controller{
-	//add head_img
-	public function user_src_add(){
+	//upload head_img
+	public function user_src_upload(){
 		$ret = [
 			'r' => 0,
 			'msg' => '',
@@ -34,6 +34,8 @@ class SrcRelation extends Controller{
 			
 			Db::startTrans();		
 			try{
+				//delete old head_img
+				$src_relation -> deleteSrc( $user_id, 3);
 				$src->save();
 				$src_relation->src_id = $src->src_id;
 				$src_relation->relation_id = $user_id;

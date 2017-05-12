@@ -8,14 +8,12 @@ use think\Config;
 
 class Comment extends Controller{
 	
-	public function index(){
-		
-	}
 	//评论添加
-	public function add(){
+	public function comment_add(){
 		$ret = [
 			'r' => 0,
-			'msg' => '',
+			'msg' => '评论成功',
+			'pc_id' => '',
 		];
 		$pid = input('pid');
 		$cid = input('cid');
@@ -28,14 +26,11 @@ class Comment extends Controller{
 			$comment->pid = $pid;
 			$comment->cid = $cid;
 			$comment->type = $type;
-			$comment->by_user_id = $by_user_id;
 			$comment->user_id = $user_id;
 			$comment->content = $content;
-			$comment->create_time = now();
 			
 			$comment->save();
 			$ret['pc_id'] = $comment->pc_id;
-			$ret['msg'] = '添加成功';
 		}else{
 			$ret['r'] = -1;
 			$ret['msg'] = 'user_id非法或评论内容不能空';
@@ -43,7 +38,24 @@ class Comment extends Controller{
 		return json($ret);
 	}
 	
-	
+	//删除评论
+	public function comment_del(){
+		$ret = [
+			'r' => 0,
+			'msg' => '删除成功',
+		];
+		$pc_id = input('pc_id');
+		if( $pc_id <= 0){
+			$ret['r'] = -1;
+			$ret['msg'] = '参数不符';
+			return json_encode( $ret );
+			exit;
+		}
+		$comment = model( 'Comment' );
+		$comment -> destroy(['pc_id' => $pc_id]);
+		
+		return json_encode( $ret );
+	}
 	
 }
 

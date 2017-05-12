@@ -12,6 +12,7 @@ class UserInfo extends Controller
     	$view = new View();
     	return $view->fetch('./index');
     }
+    
     public function get_user_part_info(){
     	$ret = [
     		'r' => 0,
@@ -38,13 +39,14 @@ class UserInfo extends Controller
     			$ret['r'] = -2;
     			$ret['msg'] = '没有查询到user_id信息';
     		}
-
     	}else{
     		$ret['r'] = -1;
     		$ret['msg'] = '参数user_id不符合要求';
     	}
+    	dump($ret);
     	return json_encode($ret);
     }
+    //个人详细信息
     public function get_user_info(){
     	$ret = [
 			'r' => -1,
@@ -77,7 +79,7 @@ class UserInfo extends Controller
     			$ret['language'] = $language;
     		}
     	}else{
-    		$ret['msg'] = '穿入的user_id不合法';
+    		$ret['msg'] = '传入的user_id不合法';
     	}
     	return json($ret);
     }
@@ -160,8 +162,9 @@ class UserInfo extends Controller
     		return json($result);
     		exit;
     	}
-    	
     }
+    
+    
     
 }
 ?>

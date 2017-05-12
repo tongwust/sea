@@ -230,7 +230,7 @@ class Index extends Controller
 		return json_encode($result);
 	}
 	public function user_logout(){
-		header("Access-Control-Allow-Origin:*"); 
+		header("Access-Control-Allow-Origin:*");
     	header("Access-Control-Allow-Method:POST,GET");
 		$result = [
 			'r' => -1,

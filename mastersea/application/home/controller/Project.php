@@ -17,7 +17,7 @@ class Project extends Controller{
 	public function get_members_info_by_project_id(){
 		$ret = [ 
 			"r" => 0,
-			"msg" => '',
+			"msg" => '查询成功',
 			'member_list' => [],
 		];
 		$project_id = input('project_id');

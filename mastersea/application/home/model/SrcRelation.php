@@ -47,5 +47,13 @@ class SrcRelation extends Model{
 		return $res;
 	}
 	
+	public function deleteSrc( $relation_id, $type){
+		$sql = 'DELETE sr,s
+				FROM src_relation AS sr LEFT JOIN sr.src_id = s.src_id
+				WHERE sr.relation_id = :relation_id && type = :type';
+		$res = Db::query( $sql, ['relation_id' => $relation_id, 'type' => $type]);
+		
+		return $res;
+	}
 }
 ?>

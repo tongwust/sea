@@ -12,12 +12,12 @@ class Praise extends Controller{
 		$ret = [
 			'r' => 0,
 			'msg' => '点赞成功',
+			'praise_id' => '',
 		];
 		$cid = input('cid');//1 项目id,2 任务
 		$user_id = input('user_id');
 		$type = input('type');
-		$opt = input('opt');//方式 1：加赞 2：减赞
-		if( !($cid > 0 && $user_id > 0 && ($type == 1 || $type == 2) && ($opt == 1 || $opt == 2)) ){
+		if( !($cid > 0 && $user_id > 0 && ($type == 1 || $type == 2)) ){
 			$ret['r'] = -1;
 			$ret['msg'] = '参数不符';
 			return json_encode( $ret );
@@ -28,21 +28,17 @@ class Praise extends Controller{
 			$praise = model('Praise');
 			$project = model('Project');
 			$task = model('Task');
-			
+			//后续记录到cache
 			if( $type == 1){
-				$res = $project -> updatePraiseNum( $opt );
-			}else if( $type == 2){
-				$res = $task -> updatePraiseNum( $opt );
+				$res = $project -> where('project_id', input('cid'))->setInc('praise_num');
+			}else{
+				$res = $task -> where('task_id',input('cid'))->setInc('praise_num');
 			}
-			if( $res <= 0){
+			if( $res <= 0 ){
 				exception('数据修改失败', -3);
 			}
-			if( $opt == 1 ){
-				$praise -> add_praise();
-			}else if($opt == 2){
-				$praise -> del_praise();
-			}
-			
+			$praise -> data(['cid' => input('cid'), 'type' => input('type'), 'user_id' => input('user_id')]) -> save();
+			$ret['praise_id'] = $praise->praise_id;
 			Db::commit();
 		}catch( \Exception $e){
 			$ret['r'] = -2;
@@ -52,6 +48,41 @@ class Praise extends Controller{
 		return json_encode( $ret );
 	}
 	
+	public function del_praise(){
+		$ret = [
+			'r' => 0,
+			'msg' => '取消成功',
+		];
+		$praise_id = input('praise_id');
+		$cid = input('cid');
+		$type = input('type');
+		if( !($cid > 0 && $praise_id > 0 && ($type == 1 || $type == 2) ) ){
+			$ret['r'] = -1;
+			$ret['msg'] = '参数不符';
+			return json_encode( $ret );
+			exit;
+		}
+		$praise = model('Praise');
+		$project = model('Project');
+		$task = model('Task');
+		Db::startTrans();
+		try{
+			
+			$res = ($type == 1)?$project -> where('project_id', input('cid'))->where('praise_num', '>', 0)->setDec('praise_num'):$task -> where('task_id',input('cid'))->where('praise_num', '>', 0)->setDec('praise_num');
+			if( $res <= 0 ){
+				exception('数据修改失败', -3);
+			}
+			$praise -> destroy(['praise_id' => $praise_id]);
+			
+			Db::commit();
+		}catch(\Exception $e){
+			Db::rollback();
+			$ret['r'] = -2;
+			$ret['msg'] = $e->getMessage();
+		}
+		
+		return json_encode( $ret );
+	}
 	
 }
 
