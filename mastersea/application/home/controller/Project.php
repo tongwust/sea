@@ -69,61 +69,127 @@ class Project extends Controller{
 		}
 		return json_encode( $ret );
 	}
+	//yunsou添加项目内容 all
+	public function add_project_search_keys(){
+		header("Access-Control-Allow-Origin:*");
+    	header("Access-Control-Allow-Method:POST,GET");
+		
+		$project_tcs = new TcsQcloudApi(58740002);
+		
+		$res = $project_tcs -> projectDataManipulation();
+		
+		return json_encode($res);
+	}
 	
+	//向腾讯云添加 搜索记录
+	public function add_search_key_by_project_id($project_id){
+//		$project_id = input('project_id');
+		$project_tcs = new TcsQcloudApi(58740002);
+		
+		$project_tcs->DataManipulationByProjectId( $project_id );
+		
+	}
 	
+	public function get_user_project_list(){
+		$ret = [ 
+			"r" => 0,
+			"msg" => '查询成功',
+			'project_list' => [],
+		];
+		$user_id = input('user_id');
+		if( $user_id <= 0){
+			$ret['r'] = -1;
+			$ret['msg'] = '参数不符';
+			return json_encode($ret);
+			exit;
+		}
+		$user_project_tag = model('UserProjectTag');
+		$project_atten = model('ProjectAttention');
+		
+		$res = $user_project_tag -> getProjectListByUserid();
+		
+		$project_id_arr = array_column( $res, 'project_id');
+		$project_ids_str = implode( ',', $project_id_arr);
+		
+		$atten_arr = $project_atten -> getProjectAttenNum($project_ids_str);
+		$arr = [];
+		foreach($atten_arr as $val){
+			$arr[$val['project_id']] = $val['atten_num'];
+		}
+		
+		$members = $user_project_tag -> get_project_members( $project_ids_str );
+		$member_num_arr = [];
+		foreach( $members as $v){
+			$member_num_arr[$v['project_id']] = isset($member_num_arr[$v['project_id']])?$member_num_arr[$v['project_id']] + 1:1;
+		}
+		foreach( $res as &$v){
+			$v['atten_num'] = empty($arr[$v['project_id']])?0:$arr[$v['project_id']];
+			$v['member_num'] = empty($member_num_arr[$v['project_id']])?0:$member_num_arr[$v['project_id']];
+		}
+		$ret['project_list'] = $res;
+		
+		return json_encode($ret);
+	}
 	
 	public function get_search_project_list(){
 		header("Access-Control-Allow-Origin:*"); 
     	header("Access-Control-Allow-Method:POST,GET");
-		$ret = [ 
-			"r" => -1,
-			"msg" => '',
+		$ret = [
+			"r" => 0,
+			"msg" => '获取成功',
 			'project_list' => [],
 		];
 		$user_id = input('user_id');
-		$search_content = input('search_content');
+		$search_query = input('search_query');
+		
 		$project = model('Project');
 		$user_project_tag = model('UserProjectTag');
+		$project_tcs = new TcsQcloudApi( 58740002 );
 		
-		if( empty($search_content) ){
+		if( empty($search_query) ){
 			
 			$res = $project->get_latest_hot_project();
 			$project_id_arr = array_column( $res, 'project_id');
-			
-			$project_str = implode(',',$project_id_arr);
-			$users = $user_project_tag->get_user_info_by_project_ids( $project_str );
-			$members = $user_project_tag->get_project_members( $project_str );
-			$member_num_arr = array();
-			foreach( $members as $v){
-				$member_num_arr[$v['project_id']] = isset($member_num_arr[$v['project_id']])?$member_num_arr[$v['project_id']] + 1:1;
-				
-			}
-			foreach($res as $k => &$v){
-				foreach($users as $u){
-					if($v['project_id'] == $u['project_id'] ){
-						$v['user_id'] = $u['user_id'];
-						$v['username'] = $u['username'];
-						$v['src_name'] = $u['src_name'];
-						$v['path'] = $u['path'];
-						break;
-					}
-				}
-				foreach($member_num_arr as $p => $val){
-					if( $v['project_id'] == $p){
-						$v['member_num'] = $val;
-						break;
-					}
-				}
-			}
-			$ret['project_list'] = $res;
-			$ret['r'] = 0;
-			$ret['msg'] = '获取成功';
+			$project_ids_str = implode( ',', $project_id_arr);
 		}else{
-			
+			//search
+			$res_json = $project_tcs -> yunsouDataSearch();
+			$data = json_decode( $res_json, true );//dump($data);
+			if( $data['r'] == 0 && $data['data']['result_list'] ){
+				$project_id_arr = array_column( $data['data']['result_list'], 'doc_id');
+				$project_ids_str = implode( ',', $project_id_arr);
+				$res = $project -> getSearchProjects( $project_ids_str );
+			}
 		}
+		if( empty($project_ids_str) || $project_ids_str == ''){
+			$ret['msg'] = '数据为空';
+			return json_encode($ret);
+			exit;
+		}
+		$users = $user_project_tag -> get_user_info_by_project_ids( $project_ids_str );
+		$members = $user_project_tag -> get_project_members( $project_ids_str );
+		$member_num_arr = array();
+		foreach( $members as $v){
+			
+			$member_num_arr[$v['project_id']] = isset($member_num_arr[$v['project_id']])?$member_num_arr[$v['project_id']] + 1:1;
+		}
+		foreach($res as $k => &$v){
+			foreach($users as $u){
+				if( $v['project_id'] == $u['project_id'] ){
+					$v['user_id'] = $u['user_id'];
+					$v['username'] = $u['username'];
+					$v['src_name'] = $u['src_name'];
+					$v['path'] = $u['path'];
+					break;
+				}
+			}
+			$v['member_num'] = empty($member_num_arr[$v['project_id']])?0:$member_num_arr[$v['project_id']];
+		}
+		$ret['project_list'] = $res;
+		
 		return json_encode($ret);
 	}
-	
+	//项目基本信息
 	public function get_project_baseinfo(){
 		$ret = [ 
 			"r" => 0,
@@ -154,14 +220,13 @@ class Project extends Controller{
 		$ret['project']['address'] = (count($address) > 0)?$address[0]:[];
 		return json_encode( $ret );
 	}
-	
+	//项目中任务详情
 	public function get_task_detail_by_projectid(){
 		$ret = [
 			"r" => -1,
 			"msg" => '',
 			'data' => [],
 		];
-		
 		$project_id = input('project_id');
 		$user_id = input('user_id');
 		if($project_id > 0){
@@ -171,8 +236,7 @@ class Project extends Controller{
 			$project_task = model('ProjectTask');
 			$src_relation = model('SrcRelation');
 			$comment = model('Comment');
-//			$res = $project->get_project_by_id();
-//			$ret['data'] = $res;
+
 			$ret['data']['skill'] = $user_project_tag->get_tag_by_userid_projectid();
 			$tasks = $project_task->get_task_src_comment_by_project_id();
 			if( count($tasks) > 0){
@@ -213,6 +277,11 @@ class Project extends Controller{
 			"msg" => ''
 		];
 		$user_id = input('user_id');
+		if( $user_id <= 0){
+			$ret['msg'] = '用户id 不能为空';
+			return json_encode($ret);
+			exit;
+		}
 		$name = trim(input('name'));
 		$type = input('type');
 		$en_name = trim(input('en_name'));
@@ -238,40 +307,41 @@ class Project extends Controller{
 		Db::startTrans();
 		try{
 			$project->name = $name;
-			$project->type = $type;
-			$project->en_name = $en_name;
-			$project->cat_name = $cat_name;
-			$project->address = $address;
-			$project->project_start_time = $project_start_time;
-			$project->project_end_time = $project_end_time;
+//			$project->type = $type;
+//			$project->en_name = $en_name;
+//			$project->cat_name = $cat_name;
+//			$project->address = $address;
+//			$project->project_start_time = $project_start_time;
+//			$project->project_end_time = $project_end_time;
 			$project->intro = $intro;
 			$project->save();
 			
 			$project_id = $project->project_id;
-			$skill_arr = explode(',' , $skill_ids);
-			if(count($skill_arr) > 0){
-				$list = [];
-				for( $i = 0; $i < count($skill_arr); $i++){
-					array_push($list, ['user_id' => $user_id,'project_id' => $project_id,'tag_id' => $skill_arr[$i]]);
-				}
-				$user_project_tag->saveAll( $list );
-			}
+//			$skill_arr = explode(',' , $skill_ids);
+//			if(count($skill_arr) > 0){
+//				$list = [];
+//				for( $i = 0; $i < count($skill_arr); $i++){
+//					array_push($list, ['user_id' => $user_id,'project_id' => $project_id,'tag_id' => $skill_arr[$i]]);
+//				}
+//				$user_project_tag->saveAll( $list );
+//			}
+			
 			foreach( $cover as $v ){
 				$info = pathinfo($v['resource_path']);
 				$path_arr = explode('/', $info['dirname']);
 				$cover_arr = [
 							'src_name'=> $info['basename'],
-							'type'=> $v['type'],
-							'src_order'=> $v['src_order'],
+							'type'=> 3,
+							'src_order'=> 0,
 							'path'=> '/' . $path_arr[count($path_arr) - 1],
 							'access_url'=>$v['access_url'],
-							'access_url'=>$v['resource_path'],
-							'access_url'=>$v['url'],
-							'access_url'=>$v['source_url'],
-							'status'=>$v['status']
+							'resource_path'=>$v['resource_path'],
+							'url'=>$v['url'],
+							'source_url'=>$v['source_url'],
+							'status'=> 0
 							];
 				$src->data( $cover_arr )->isUpdate(false)->save();
-				$src_relation->data([ 'src_id' => $src->src_id, 'relation_id' => $project_id, 'type' => $v['type']])->isUpdate(false)->save();//项目3
+				$src_relation->data([ 'src_id' => $src->src_id, 'relation_id' => $project_id, 'type' => 2])->isUpdate(false)->save();//项目3
 			}
 			for($j = 0; $j < count($tasks); $j++){
 
@@ -291,9 +361,9 @@ class Project extends Controller{
 							'src_order' => $tasks[$j]['src_order'],
 							'path' => '/' . $path_arr[count($path_arr) - 1],
 							'access_url' => $tasks[$j]['access_url'],
-							'access_url' => $tasks[$j]['resource_path'],
-							'access_url' => $tasks[$j]['url'],
-							'access_url' => $tasks[$j]['source_url'],
+							'resource_path' => $tasks[$j]['resource_path'],
+							'url' => $tasks[$j]['url'],
+							'source_url' => $tasks[$j]['source_url'],
 							'status' => $tasks[$j]['status']
 							];
 				$src->data( $src_arr )->isUpdate(false)->save();
@@ -310,8 +380,12 @@ class Project extends Controller{
 			Db::rollback();
 			$ret['msg'] = '添加数据异常'.$e;
 		}
-		return json($ret);
+		$this->add_search_key_by_project_id($project_id);
+		return json_encode($ret);
 	}
+	
+	//项目删除
+	
 	
 	public function upload(Request $request){
 		$ret = [

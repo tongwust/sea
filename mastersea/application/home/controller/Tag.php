@@ -9,6 +9,15 @@ use think\Loader;
 
 class Tag extends Controller{
 	
+	//search tag
+	public function search_tags(){
+		
+		$tag_tcs = new TcsQcloudApi(58260002);
+		
+		$res = $tag_tcs -> yunsouDataSearch();
+		return $res;
+	}
+	
 	public function get_part_by_tagid_themeid(){
 		$ret = [
 			'r' => -1,

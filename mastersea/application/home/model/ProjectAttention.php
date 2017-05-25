@@ -17,5 +17,15 @@ class ProjectAttention extends Model{
 								 ]);
 		return $res;
 	}
+	
+	public function getProjectAttenNum($project_ids_str){
+		
+		$sql = 'SELECT project_id,count(user_id) as atten_num
+				FROM project_attention
+				WHERE project_id in ('.$project_ids_str.')
+				GROUP BY project_id';
+		$res = Db::query( $sql );
+		return $res;
+	}
 }
 ?>

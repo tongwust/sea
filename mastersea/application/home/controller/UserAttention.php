@@ -9,6 +9,8 @@ use think\Cache;
 
 class UserAttention extends Controller{
 	
+	
+	
 	public function add_atten(){
 		$ret = [
 			'r' => 0,

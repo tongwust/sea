@@ -13,11 +13,13 @@ class TcsQcloudApi extends Controller{
 	protected $secretKey;
 	protected $secretId;
 	protected $appId;
-	
+	//shining
 	const SECRETKEY = 'DEC2hJk4B622r9QiokV7YoskQuDNPL8s';
 	const SECRETID	= 'AKIDSoqmX0Wk282oPswIH5hicT8br7DEDg7N';
-	const APPID = '58260002';
+//	const APPID = '58260002';
 	const REGION = 'bj';
+	//project
+//	const APPID = '58740002';
 	
 	public function __construct($appId = self::APPID, $secretId = self::SECRETID, $secretKey = self::SECRETKEY){
 		
@@ -25,6 +27,96 @@ class TcsQcloudApi extends Controller{
 		$this->secretId = $secretId;
 		$this->secretKey = $secretKey;
 	}
+	//云搜中添加项目数据
+	public function projectDataManipulation(){
+		$ret = [
+			'r' => 0,
+			'msg' => '操作成功',
+		];
+		$this->HttpMethod = 'POST';
+		$op_type = (input('op_type'))?input('op_type'):'add';//default add
+		$project = model('Project');
+		$user_project_tag = model('UserProjectTag');
+		
+		$content = $project -> getAllProjectList();
+		$project_id_arr = array_column( $content, 'project_id');
+		$project_ids_str = implode( ',', $project_id_arr);
+		$tags = $user_project_tag -> getUserTags($project_ids_str);
+		$tag_names = [];
+		foreach( $tags as $val){
+			$tag_names[$val['project_id']] = isset($tag_names[$val['project_id']])?($tag_names[$val['project_id']].' '.$val['name']):$val['name'];
+		}
+		$COMMON_PARAMS = array(
+	        'Nonce'=> rand(),
+	        'Timestamp'=>time(NULL),
+	        'Action'=> 'DataManipulation',
+	        'SecretId'=> $this->secretId,
+	        'Region' => self::REGION,
+	        'op_type' => $op_type,
+	        'appId' => $this->appId,
+		);
+		$PRIVATE_PARAMS = [];//dump($tag_names);dump($content);
+		foreach($content as $k => $v){
+			$PRIVATE_PARAMS['contents.'.$k.'.projectid'] = $v['project_id'];
+			$PRIVATE_PARAMS['contents.'.$k.'.praisenum'] = $v['praise_num'];
+			$PRIVATE_PARAMS['contents.'.$k.'.collectnum'] = $v['collect_num'];
+			$PRIVATE_PARAMS['contents.'.$k.'.name'] = $v['name'];
+			$PRIVATE_PARAMS['contents.'.$k.'.englishname'] = $v['en_name'];
+			$PRIVATE_PARAMS['contents.'.$k.'.catname'] = $v['cat_name'];
+			$PRIVATE_PARAMS['contents.'.$k.'.address'] = $v['address'];
+			$PRIVATE_PARAMS['contents.'.$k.'.intro'] = $v['intro'];
+			$PRIVATE_PARAMS['contents.'.$k.'.tagname'] = empty($tag_names[$v['project_id']])?'':$tag_names[$v['project_id']];
+			$PRIVATE_PARAMS['contents.'.$k.'.createtime'] = $v['create_time'];
+		}
+		$res = $this->CreateRequest($COMMON_PARAMS, $PRIVATE_PARAMS);
+		$ret['r'] = $res['retcode'];
+		$ret['msg'] = $res['errmsg'];
+		return json_encode($ret);
+	}
+	public function DataManipulationByProjectId($project_id){
+		$ret = [
+			'r' => 0,
+			'msg' => '操作成功',
+		];
+		$this->HttpMethod = 'POST';
+		$op_type = (input('op_type'))?input('op_type'):'add';//default add
+		$project = model('Project');
+		$user_project_tag = model('UserProjectTag');
+		
+		$content = $project -> getSearchKeyByProjectId($project_id);
+		$tags = $user_project_tag -> getUserTagsByProjectId($project_id);
+		$tag_names = [];
+		foreach( $tags as $val){
+			$tag_names[$val['project_id']] = isset($tag_names[$val['project_id']])?($tag_names[$val['project_id']].' '.$val['name']):$val['name'];
+		}
+		$COMMON_PARAMS = array(
+	        'Nonce'=> rand(),
+	        'Timestamp'=>time(NULL),
+	        'Action'=> 'DataManipulation',
+	        'SecretId'=> $this->secretId,
+	        'Region' => self::REGION,
+	        'op_type' => $op_type,
+	        'appId' => $this->appId,
+		);
+		$PRIVATE_PARAMS = [];//dump($tag_names);dump($content);
+		foreach($content as $k => $v){
+			$PRIVATE_PARAMS['contents.'.$k.'.projectid'] = $v['project_id'];
+			$PRIVATE_PARAMS['contents.'.$k.'.praisenum'] = $v['praise_num'];
+			$PRIVATE_PARAMS['contents.'.$k.'.collectnum'] = $v['collect_num'];
+			$PRIVATE_PARAMS['contents.'.$k.'.name'] = $v['name'];
+			$PRIVATE_PARAMS['contents.'.$k.'.englishname'] = $v['en_name'];
+			$PRIVATE_PARAMS['contents.'.$k.'.catname'] = $v['cat_name'];
+			$PRIVATE_PARAMS['contents.'.$k.'.address'] = $v['address'];
+			$PRIVATE_PARAMS['contents.'.$k.'.intro'] = $v['intro'];
+			$PRIVATE_PARAMS['contents.'.$k.'.tagname'] = empty($tag_names[$v['project_id']])?'':$tag_names[$v['project_id']];
+			$PRIVATE_PARAMS['contents.'.$k.'.createtime'] = $v['create_time'];
+		}
+		$res = $this->CreateRequest($COMMON_PARAMS, $PRIVATE_PARAMS);
+		$ret['r'] = $res['retcode'];
+		$ret['msg'] = $res['errmsg'];
+		return json_encode($ret);
+	}
+	
 	public function yunsouDataManipulation(){
 		$ret = [
 			'r' => 0,
@@ -77,6 +169,9 @@ class TcsQcloudApi extends Controller{
 			return json_encode( $ret );
 			exit;
 		}
+		$from = empty(input('from'))?0:input('from');
+		$num_per_page = empty(input('page_size'))?10:input('page_size');
+		$page_id = floor($from / $num_per_page);
 		$COMMON_PARAMS = array(
 	        'Nonce' => rand(),
 	        'Timestamp' => time(NULL),
@@ -84,8 +179,8 @@ class TcsQcloudApi extends Controller{
 	        'SecretId'=> $this->secretId,
 	        'Region' => self::REGION,
 	        'search_query' => $search_query,
-	        'page_id' => 0,
-	        'num_per_page' => 10,
+	        'page_id' => $page_id,
+	        'num_per_page' => $num_per_page,
 	        'appId' =>  $this->appId,
 		);
 		$PRIVATE_PARAMS = [];
@@ -94,7 +189,6 @@ class TcsQcloudApi extends Controller{
 		$ret['r'] = $res['code'];
 		$ret['msg'] = $res['message'];
 		$ret['data'] = $res['data'];
-		
 		return json_encode( $ret );
 	}
 	
