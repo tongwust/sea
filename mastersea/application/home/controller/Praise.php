@@ -53,7 +53,7 @@ class Praise extends Controller{
 			'r' => 0,
 			'msg' => '取消成功',
 		];
-		$praise_id = input('praise_id');
+		$user_id = input('user_id');
 		$cid = input('cid');
 		$type = input('type');
 		if( !($cid > 0 && $praise_id > 0 && ($type == 1 || $type == 2) ) ){
@@ -72,7 +72,7 @@ class Praise extends Controller{
 			if( $res <= 0 ){
 				exception('数据修改失败', -3);
 			}
-			$praise -> destroy(['praise_id' => $praise_id]);
+			$praise -> destroy(['cid' => $cid,'user_id' => $user_id, 'type' => $type]);
 			
 			Db::commit();
 		}catch(\Exception $e){

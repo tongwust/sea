@@ -13,6 +13,16 @@ function interface_log($content){
 	$file = ROOT_PATH.'/public/log/log'.$datefile.'.log';
 	file_put_contents ( $file ,  $content ,  FILE_APPEND  |  LOCK_EX );
 }
+
+//function check_sess(){
+//	$user_info = '';
+//	if( cookie('PHPSESSID') != ''){
+////		session_id(cookie('PHPSESSID'));
+//		$user_info = session('userinfo');
+//	}
+//	return $user_info;
+//}
+
 // 应用公共文件
 /**
  * 系统邮件发送函数

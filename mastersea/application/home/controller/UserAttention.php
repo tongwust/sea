@@ -37,15 +37,17 @@ class UserAttention extends Controller{
 			'r' => 0,
 			'msg' => '取消关注',
 		];
-		$user_attention_id = input('user_attention_id');
-		if( $user_attention_id <= 0){
+		$user_id = input('user_id');
+		$follow_user_id = input('follow_user_id');
+		$relation_type = input('relation_type');
+		if( $user_id <= 0 || $follow_user_id <= 0){
 			$ret['r'] = -1;
 			$ret['msg'] = '参数不符';			
 			return json_encode( $ret );
 			exit;
 		}
 		$user_attention = model('UserAttention');
-		$user_attention -> destroy(['user_attention_id' => $user_attention_id]);
+		$user_attention -> destroy(['user_id' => $user_id, 'follow_user_id' => $follow_user_id,'relation_type' => $relation_type]);
 		
 		return json_encode( $ret );
 	}

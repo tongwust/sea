@@ -26,7 +26,7 @@ class SrcRelation extends Controller{
 			$src->src_name = $info['basename'];
 			$path_arr = explode('/', $info['dirname']);
 			$src->path = '/' . $path_arr[count($path_arr) - 1];
-			$src->type = input('type');//普通图片
+			$src->type = 2;//头像
 			$src->access_url = input('access_url');
 			$src->resource_path = $resource_path;
 			$src->source_url = input('source_url');
@@ -35,7 +35,7 @@ class SrcRelation extends Controller{
 			Db::startTrans();		
 			try{
 				//delete old head_img
-				$src_relation -> deleteSrc( $user_id, 3);
+//				$src_relation -> deleteSrc( $user_id, 3);
 				$src->save();
 				$src_relation->src_id = $src->src_id;
 				$src_relation->relation_id = $user_id;
@@ -57,7 +57,7 @@ class SrcRelation extends Controller{
 		return json_encode( $ret );
 	}
 	//delete head_img
-	public function user_src_delete(){	
+	public function user_src_delete(){
 		$ret = [
 			'r' => 0,
 			'msg' => '删除数据成功',

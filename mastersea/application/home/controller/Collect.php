@@ -54,7 +54,7 @@ class Collect extends Controller{
 			'msg' => '收藏成功',
 		];
 		$cid = input('cid');
-		$collect_id = input('collect_id');
+		$user_id = input('user_id');
 		$type = input('type');
 		if( !($cid > 0 && $collect_id > 0 && ($type == 1 || $type == 2) ) ){
 			$ret['r'] = -1;
@@ -76,7 +76,7 @@ class Collect extends Controller{
 			if( $res <= 0){
 				exception('数据修改失败', -3);
 			}
-			$collect -> destroy(['collect_id' => input('collect_id')]);
+			$collect -> destroy(['user_id' => $user_id,'cid' => $cid,'type' => $type]);
 			Db::commit();
 		}catch(\Exception $e){
 			$ret['r'] = -2;

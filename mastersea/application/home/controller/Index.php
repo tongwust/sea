@@ -194,7 +194,6 @@ class Index extends Controller
 			'msg' => '',
 		];
 		$user = model('User');
-//		$user_tim = new UserTim;
 		$name = trim(input('name'));
 		$pwd = trim(input('pwd'));
 		$is_rember = input('is_rember');
@@ -217,11 +216,18 @@ class Index extends Controller
 			if($is_rember == 1)	$session_config['expire'] = 7*24*3600;
 			session($session_config);
 			$result['PHPSESSID'] = session_id();
-			session('user.name',$res[0]['name']);
-			session('user.user_id',$res[0]['user_id']);
+			session('userinfo.user_id',$res[0]['user_id']);
+			session('userinfo.name',$res[0]['name']);
+			session('userinfo.sex', $res[0]['sex']);
+			session('userinfo.path', $res[0]['path']);
+			session('userinfo.resource_path', $res[0]['resource_path']);
+			session('userinfo.access_url', $res[0]['access_url']);
+			
 			$result = array_merge( $result, $res[0] );
-			$expire = ($is_rember == 1)?7*24*3600:2*3600;
-			cache($res[0]['user_id'], $result['PHPSESSID'], $expire );
+//			$expire = ($is_rember == 1)?7*24*3600:2*3600;
+//			cache( $result['PHPSESSID'], $res[0], $expire );
+//			dump($res[0]);
+//			dump(cache($res[0]['user_id']));
 //			$ret = $user_tim->gen_sig($res[0]['user_id']);
 //			cookie( 'sig', $ret['sig'], ['prefix' => 'think_', 'expire' => 179*24*3600]);
 		}else{
@@ -229,6 +235,7 @@ class Index extends Controller
 		}
 		return json_encode($result);
 	}
+	
 	public function user_logout(){
 		header("Access-Control-Allow-Origin:*");
     	header("Access-Control-Allow-Method:POST,GET");

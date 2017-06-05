@@ -23,7 +23,7 @@ class Task extends Controller{
 		}
 		$task = model('Task');
 		$res = $task->updateTaskByTaskid();
-		
+//		dump($res);
 		return json_encode( $ret );
 	}
 	
@@ -34,7 +34,9 @@ class Task extends Controller{
 			'msg' => '修改成功',
 		];
 		$task_id = input('task_id');
-		if( $task_id <= 0){
+		$project_id = input('project_id');
+		$opt_id = input('opt_id');
+		if( $task_id <= 0 || $project_id <= 0 || $opt_id <= 0){
 			$ret['r'] = -1;
 			$ret['msg'] = '参数不符';
 			return json_encode( $ret );
@@ -42,11 +44,11 @@ class Task extends Controller{
 		}
 		Db::startTrans();
 		try{
-			$project_task = model('ProjectTask');
+			$project_task_user = model('ProjectTaskUser');
 			$task = model('Task');
 			$src_relation = model('SrcRelation');
 			
-			$project_task->deleteByTaskid();
+			$project_task_user->deleteByTaskid();
 			$task->deleteByTaskid();
 			$src_relation->deleteByTaskid();
 			

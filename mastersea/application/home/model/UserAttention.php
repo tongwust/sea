@@ -27,8 +27,15 @@ class UserAttention extends Model{
 		$sql = 'SELECT user_id
 				FROM user_attention
 				WHERE follow_user_id=:follow_user_id';
-		
 		$res = Db::query( $sql, ['follow_user_id' => $follow_user_id]);
+		
+		return $res;
+	}
+	public function getMyAttenUsersByUserId(){
+		$sql = 'SELECT follow_user_id
+				FROM user_attention
+				WHERE user_id = :user_id';
+		$res = Db::query( $sql, ['user_id' => input('user_id')]);
 		
 		return $res;
 	}

@@ -35,7 +35,7 @@ class Comment extends Controller{
 			$ret['r'] = -1;
 			$ret['msg'] = 'user_id非法或评论内容不能空';
 		}
-		return json($ret);
+		return json_encode($ret);
 	}
 	
 	//删除评论
