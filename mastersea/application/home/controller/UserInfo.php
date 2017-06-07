@@ -12,7 +12,22 @@ class UserInfo extends Controller
     	$view = new View();
     	return $view->fetch('./index');
     }
-    
+    public function get_sess_info(){
+    	$ret = [
+    		'r' => 0,
+    		'msg' => '已登录',
+    		'userinfo' =>'',
+    	];
+      	if( !session('userinfo') ){
+    		$ret['r'] = 0;
+    		$ret['msg'] = '未登录，请登录';
+    		return json_encode( $ret);
+    		exit;
+    	}
+    	$ret['userinfo'] = session('userinfo');
+    	
+    	return json_encode($ret);
+    }
     public function get_user_part_info(){
     	$ret = [
     		'r' => 0,

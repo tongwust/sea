@@ -31,7 +31,7 @@ class Task extends Controller{
 	public function delete_project_task(){
 		$ret = [
 			'r' => 0,
-			'msg' => '修改成功',
+			'msg' => '删除成功',
 		];
 		$task_id = input('task_id');
 		$project_id = input('project_id');

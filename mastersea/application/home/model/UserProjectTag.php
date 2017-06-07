@@ -95,7 +95,7 @@ class UserProjectTag extends Model{
 				FROM user_project_tag AS upt LEFT JOIN user AS u ON upt.user_id = u.user_id
 					LEFT JOIN src_relation AS sr ON sr.type = 3 && u.user_id = sr.relation_id
 					LEFT JOIN src AS s ON sr.src_id = s.src_id && s.type = 2
-					INNER JOIN tag_info AS ti ON upt.tag_id = ti.tag_id
+					LEFT JOIN tag_info AS ti ON upt.tag_id = ti.tag_id
 				WHERE upt.project_id = :project_id
 				ORDER BY upt.create_time DESC';
 		$res = Db::query( $sql, ['project_id'=>$project_id] );

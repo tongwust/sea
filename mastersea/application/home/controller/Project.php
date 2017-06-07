@@ -142,10 +142,9 @@ class Project extends Controller{
 			'member_list' => [],
 		];
 		$project_id = input('project_id');
-		
 		if( $project_id > 0){
 			$user_project_tag = model('UserProjectTag');
-			$res = $user_project_tag->getMemberInfoByProjectId();
+			$res = $user_project_tag->getMemberInfoByProjectId();//dump($res);
 			$arr = [];
 			foreach($res as $k => $v){
 				$arr[intval($v['user_id'])] = $v;
@@ -286,21 +285,42 @@ class Project extends Controller{
 		
 		return json_encode($ret);
 	}
-	
+	public function get_search_project_ids(){
+		$ret = [
+			"r" => 0,
+			"msg" => '获取成功',
+			'data' => [],
+		];
+		$search_query = input('search_query');
+		if( empty($search_query)){
+			$ret['r'] = -1;
+			$ret['msg'] = '参数为空';
+			return json_encode($ret);
+			exit;
+		}
+		$project_tcs = new TcsQcloudApi( 58740002 );
+		$res_json = $project_tcs -> yunsouDataSearch();
+		$data = json_decode( $res_json, true);
+		$ret['r'] = $data['r'];
+		$ret['data'] = $data['data'];
+//		dump($ret);
+		return json_encode($ret);
+	}
 	public function get_search_project_list(){
 		header("Access-Control-Allow-Origin:*"); 
     	header("Access-Control-Allow-Method:POST,GET");
 		$ret = [
 			"r" => 0,
-			"msg" => '获取成功',
+			"msg" => '查询成功',
 			'project_list' => [],
 		];
 		$user_id = input('user_id');
 		$search_query = input('search_query');
+		$project_ids_str = input('project_ids');
 		
 		$project = model('Project');
 		$user_project_tag = model('UserProjectTag');
-		$project_tcs = new TcsQcloudApi( 58740002 );
+//		$project_tcs = new TcsQcloudApi( 58740002 );
 		
 		if( empty($search_query) ){
 			
@@ -309,13 +329,14 @@ class Project extends Controller{
 			$project_ids_str = implode( ',', $project_id_arr);
 		}else{
 			//search
-			$res_json = $project_tcs -> yunsouDataSearch();
-			$data = json_decode( $res_json, true );//dump($data);
-			if( $data['r'] == 0 && $data['data']['result_list'] ){
-				$project_id_arr = array_column( $data['data']['result_list'], 'doc_id');
-				$project_ids_str = implode( ',', $project_id_arr);
-				$res = $project -> getSearchProjects( $project_ids_str );
-			}
+//			$res_json = $project_tcs -> yunsouDataSearch();
+//			$data = json_decode( $res_json, true );//dump($data);
+//			if( $data['r'] == 0 && $data['data']['result_list'] ){
+//				$project_id_arr = array_column( $data['data']['result_list'], 'doc_id');
+//				$project_ids_str = implode( ',', $project_id_arr);
+//				$res = $project -> getSearchProjects( $project_ids_str );
+//			}
+			$res = $project -> getSearchProjects( $project_ids_str );
 		}
 		if( empty($project_ids_str) || $project_ids_str == ''){
 			$ret['msg'] = '数据为空';
@@ -397,9 +418,7 @@ class Project extends Controller{
 			exit;
 		}
 		$project = model('Project');
-		
 		$res = $project -> updateProjectById();
-		
 		return json_encode( $ret);
 	}
 	
@@ -419,7 +438,6 @@ class Project extends Controller{
 			$src_relation = model('SrcRelation');
 			$comment = model('Comment');
 			$collect = model('Collect');
-
 			$ret['data']['skill'] = $user_project_tag->get_tag_by_userid_projectid();
 			
 			$tasks = $project_task_user->get_task_src_comment_by_project_id();
@@ -432,7 +450,6 @@ class Project extends Controller{
 				foreach( $res as $c){
 					$collect_arr[$c['task_id']] = $c['collect_num'];
 				}
-				
 				foreach($tasks as &$v){
 					$v['collect_num'] = isset($collect_arr[$v['task_id']])?$collect_arr[$v['task_id']]:0;
 					foreach($src_arr as $value){
@@ -483,7 +500,7 @@ class Project extends Controller{
 		$src_relation = model('SrcRelation');
 		Db::startTrans();
 		try{
-			$task->data(['title'=>input('title')]) -> isUpdate(false) -> save();
+			$task->data(['title'=>input('title'),'task_order' => input('task_order')]) -> isUpdate(false) -> save();
 			$task_id = $task->task_id;
 			
 			$project_task_user -> data(['project_id' => $project_id,'task_id'=>$task_id,'user_id'=>$user_id]) -> isUpdate(false) -> save();
@@ -510,7 +527,6 @@ class Project extends Controller{
 			$ret['r'] = -2;
 			$ret['msg'] = $e->getMessage();
 		}
-		
 		return json_encode($ret);
 	}
 	public function add(){
@@ -533,7 +549,7 @@ class Project extends Controller{
 		$project_end_time = input('project_end_time');
 		$intro = trim(input('intro'));
 		$skill_ids = trim(input('skill_ids'));
-		$tasks = json_decode(input('tasks'),true);
+		$tasks = json_decode(input('task'),true);
 		$cover = json_decode(input('cover'),true);
 		
 		$status = 0;	//待审
@@ -592,7 +608,7 @@ class Project extends Controller{
 			}
 			for($j = 0; $j < count($tasks); $j++){
 
-				$task->data(['title'=>$tasks[$j]['title'],'description' => $tasks[$j]['description'] ])->isUpdate(false)->save();
+				$task->data(['title'=>$tasks[$j]['title'],'description' => $tasks[$j]['description'],'task_order' => $tasks[$j]['task_order'] ])->isUpdate(false)->save();
 				
 				$task_id = $task->task_id;
 				

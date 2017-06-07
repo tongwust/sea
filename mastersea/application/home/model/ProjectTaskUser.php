@@ -12,10 +12,10 @@ class ProjectTaskUser extends Model{
 		$page_size = empty( input('page_size'))?10:input('page_size');
 		$project_id = input('project_id');
 		
-		$sql = 'SELECT ptu.task_id,t.title,t.description,t.status,t.praise_num,t.create_time
+		$sql = 'SELECT ptu.task_id,t.title,t.description,t.status,t.praise_num,t.create_time,t.task_order
 				FROM project_task_user ptu LEFT JOIN task t ON ptu.task_id = t.task_id
 				WHERE ptu.project_id = :project_id
-					ORDER BY t.create_time DESC LIMIT '.$from.','.$page_size;
+					ORDER BY t.create_time DESC,t.task_order ASC LIMIT '.$from.','.$page_size;
 		
 		$res = Db::query( $sql, ['project_id' => $project_id]);
 		return $res;
