@@ -22,5 +22,6 @@ class UserInfo extends Model{
 		return $res;
 	}
 	
+	
 }
 ?>

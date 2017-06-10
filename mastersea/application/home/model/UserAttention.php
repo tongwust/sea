@@ -21,6 +21,34 @@ class UserAttention extends Model{
 		return $res;
 	}
 	
+	public function getAttenMeUserList( $user_id){
+		$from = input('from')?input('from'):0;
+		$page_size = input('page_size')?input('page_size'):35;
+		
+		$sql = 'SELECT ua.user_id,u.name user_name,s.src_id user_src_id,s.access_url user_access_url
+				FROM user_attention AS ua LEFT JOIN user AS u ON ua.user_id = u.user_id
+					LEFT JOIN src_relation AS sr ON sr.relation_id = u.user_id && sr.type = 3
+					LEFT JOIN src AS s ON s.src_id = sr.src_id && s.type = 2
+				WHERE ua.follow_user_id = :follow_user_id
+					LIMIT '.$from.','.$page_size;
+		$res = Db::query($sql, ['follow_user_id' => $user_id]);
+		
+		return $res;
+	}
+	public function getMyAttenUserList( $user_id){
+		$from = input('from')?input('from'):0;
+		$page_size = input('page_size')?input('page_size'):35;
+		
+		$sql = 'SELECT ua.follow_user_id user_id,u.name user_name,s.src_id user_src_id,s.access_url user_access_url
+				FROM user_attention AS ua LEFT JOIN user AS u ON ua.follow_user_id = u.user_id
+					LEFT JOIN src_relation AS sr ON sr.relation_id = u.user_id && sr.type = 3
+					LEFT JOIN src AS s ON s.src_id = sr.src_id && s.type = 2
+				WHERE ua.user_id = :user_id
+					LIMIT '.$from.','.$page_size;
+		$res = Db::query($sql, ['user_id' => $user_id]);
+		
+		return $res;
+	}
 	public function get_follow_users_by_id(){
 		
 		$follow_user_id = input('user_id');

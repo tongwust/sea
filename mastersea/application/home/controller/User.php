@@ -33,8 +33,7 @@ class User extends Controller{
 		$user_ids_str = implode( ',', $user_id_arr);
 		
 		$projects = $user_project_tag -> getUserProjectByUserids($user_ids_str);
-//		dump($projects);
-		
+
 		$atten_num_arr = $user_attention -> getAttenNumByUserids($user_ids_str);
 		$atten_arr = [];
 		foreach( $atten_num_arr as $a){

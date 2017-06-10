@@ -28,6 +28,230 @@ class UserInfo extends Controller
     	
     	return json_encode($ret);
     }
+    public function get_my_atten_project_list(){
+    	$ret = [
+    		'r' => 0,
+    		'msg' => '查询成功',
+    		'pinfo' => [],
+    	];
+    	if( !session('userinfo') ){
+    		$ret['r'] = -100;
+    		$ret['msg'] = '请登录';
+    		return json_encode($ret);
+    		exit;
+    	}
+    	$user_id = session('userinfo')['user_id'];
+//  	$user_id = 3;
+    	$project_attention = model('ProjectAttention');
+    	$user_project_tag = model('UserProjectTag');
+    	
+    	$res = $project_attention -> getMyAttenProjectList($user_id);
+    	
+    	$project_ids_str = implode(',',array_unique(array_column($res,'project_id')));
+    	
+    	$atten_arr = $project_attention -> getProjectAttenNum($project_ids_str);
+    	$users_arr = $user_project_tag -> get_user_info_by_project_ids($project_ids_str);dump($project_ids_str);
+
+    	$atten = [];
+    	foreach($atten_arr as $a){
+    		$atten[$a['project_id']] = $a['atten_num'];
+    	}
+    	$users = [];
+    	foreach($users_arr as $u){
+    		$users[$u['project_id']] = $u;
+    	}
+//  	dump($users);
+    	foreach($res as $k => &$v){
+    		$v['atten_num'] = isset($atten[$v['project_id']])?$atten[$v['project_id']]:0;
+    		if( isset($users[$v['project_id']])){
+    			$v['user_id'] = $users[ $v['project_id'] ]['user_id'];
+    			$v['user_name'] = $users[ $v['project_id'] ]['username'];
+    			$v['user_src_id'] = $users[ $v['project_id'] ]['src_id'];
+    			$v['user_access_url'] = $users[ $v['project_id'] ]['access_url'];
+    		}else{
+    			unset( $res[$k] );
+    		}
+    	}
+    	$ret['pinfo'] = $res;
+//  	dump($ret);
+    	return json_encode($ret);
+    }
+    public function get_my_atten_user_list(){
+    	$ret = [
+    		'r' => 0,
+    		'msg' => '查询成功',
+    		'uinfo' => [],
+    	];
+    	if( !session('userinfo') ){
+    		$ret['r'] = -100;
+    		$ret['msg'] = '请登录';
+    		return json_encode($ret);
+    		exit;
+    	}
+    	$user_id = session('userinfo')['user_id'];
+//  	$user_id = 3;
+    	$user_attention = model('UserAttention');
+    	$user_project_tag = model('UserProjectTag');
+    	$user_tag = model('UserTag');
+    	
+    	$res = $user_attention -> getMyAttenUserList($user_id);
+    	$user_ids_str = implode(',',array_column( $res, 'user_id'));
+    	$project_num_arr = $user_project_tag -> getProjectNumByUserids($user_ids_str);
+
+		$arr = [];
+		foreach($project_num_arr as $v){
+			$arr[$v['project_id']] = $v['user_id'];
+		}
+		$arr = array_count_values( $arr );
+		$tags = $user_tag -> getTagsByUserIds($user_ids_str);
+		
+    	$atten_num_arr = $user_attention -> getAttenNumByUserids($user_ids_str);
+		$atten_arr = [];
+		foreach( $atten_num_arr as $a){
+			$atten_arr[$a['follow_user_id']] = $a['atten_num'];
+		}
+		$project_src = $user_project_tag -> getProjectCoverByUserids($user_ids_str);
+
+    	foreach($res as &$v){
+    		$v['tags'] = [];
+    		foreach($tags as $p){
+    			if($v['user_id'] == $p['user_id']){
+    				if($p['tag_id'] > 0){
+    					array_push($v['tags'],['tag_id' => $p['tag_id'],'tag_name'=>$p['tag_name']]);
+    				}
+    			}
+    		}
+    		$v['project_num'] = isset($arr[$v['user_id']])?0:$arr[$v['user_id']];
+    		$v['atten_num'] = isset($atten_arr[$v['user_id']])?0:$atten_arr[$v['user_id']];
+    		foreach($project_src as $ps){
+    			if( $v['user_id'] == $ps['user_id']){
+    				$v['project_id'] = $ps['project_id'];
+    				$v['project_src_id'] = $ps['project_src_id'];
+    				$v['project_access_url'] = $ps['project_access_url'];
+    				break;
+    			}
+    		}
+    	}
+//  	dump($res);
+    	$ret['uinfo'] = $res;
+    	
+    	return json_encode( $ret);
+    }
+    public function get_atten_me_user_list(){
+    	$ret = [
+    		'r' => 0,
+    		'msg' => '查询成功',
+    		'uinfo' => [],
+    	];
+    	if( !session('userinfo') ){
+    		$ret['r'] = -100;
+    		$ret['msg'] = '请登录';
+    		return json_encode($ret);
+    		exit;
+    	}
+    	$user_id = session('userinfo')['user_id'];
+//  	$user_id = 3;
+    	$user_attention = model('UserAttention');
+    	$user_project_tag = model('UserProjectTag');
+    	$user_tag = model('UserTag');
+    	
+    	$res = $user_attention -> getAttenMeUserList($user_id);
+//  	dump($res);
+    	$user_ids_str = implode(',',array_column( $res, 'user_id'));
+    	$project_num_arr = $user_project_tag -> getProjectNumByUserids($user_ids_str);
+//  	dump($project_num_arr);
+		$arr = [];
+		foreach($project_num_arr as $v){
+			$arr[$v['project_id']] = $v['user_id'];
+		}
+		$arr = array_count_values( $arr );
+//		$project_tags = [];
+		$tags = $user_tag -> getTagsByUserIds($user_ids_str);
+		
+    	$atten_num_arr = $user_attention -> getAttenNumByUserids($user_ids_str);
+		$atten_arr = [];
+		foreach( $atten_num_arr as $a){
+			$atten_arr[$a['follow_user_id']] = $a['atten_num'];
+		}
+//  	dump($atten_arr);
+    	$project_src = $user_project_tag -> getProjectCoverByUserids($user_ids_str);
+//  	dump($project_src);
+    	foreach($res as &$v){
+    		$v['tags'] = [];
+    		foreach($tags as $p){
+    			if($v['user_id'] == $p['user_id']){
+    				if($p['tag_id'] > 0){
+    					array_push($v['tags'],['tag_id' => $p['tag_id'],'tag_name'=>$p['tag_name']]);
+    				}
+    			}
+    		}
+    		$v['project_num'] = isset($arr[$v['user_id']])?0:$arr[$v['user_id']];
+    		$v['atten_num'] = isset($atten_arr[$v['user_id']])?0:$atten_arr[$v['user_id']];
+    		foreach($project_src as $ps){
+    			if( $v['user_id'] == $ps['user_id']){
+    				$v['project_id'] = $ps['project_id'];
+    				$v['project_src_id'] = $ps['project_src_id'];
+    				$v['project_access_url'] = $ps['project_access_url'];
+    				break;
+    			}
+    		}
+    	}
+//  	dump($res);
+    	$ret['uinfo'] = $res;
+    	return json_encode( $ret);
+    }
+    public function get_my_project_atten_user_list(){
+    	$ret = [
+    		'r' => 0,
+    		'msg' => '查询成功',
+    		'pinfo' => [],
+    	];
+    	if( !session('userinfo') ){
+    		$ret['r'] = -100;
+    		$ret['msg'] = '请登录';
+    		return json_encode($ret);
+    		exit;
+    	}
+    	$user_id = session('userinfo')['user_id'];
+//  	$user_id = 3;
+    	$user_project_tag = model('UserProjectTag');
+    	$project_attention = model('ProjectAttention');
+    	$user_tag = model('UserTag');
+    	
+    	$res = $user_project_tag -> GetMyProjectList( $user_id );
+//  	dump($res);
+    	$project_ids_str = implode(',', array_column( $res, 'project_id'));
+    	
+    	$users = $project_attention -> getProjectAttenUsers($project_ids_str);
+//  	dump($users);
+    	$user_ids_str = implode(',', array_unique(array_column($users,'user_id')) );
+    	$tags = $user_tag -> getTagsByUserIds($user_ids_str);
+//  	dump($tags);
+		foreach($users as &$us){
+			$us['tags'] = [];
+			foreach($tags as $t){
+				if($us['user_id'] == $t['user_id']){
+					if($t['tag_id'] > 0){
+						array_push($us['tags'],['tag_id' => $t['tag_id'],'tag_name'=>$t['tag_name']]);
+					}
+    			}
+			}
+		}
+    	foreach($res as &$v){
+    		$v['patten_num'] = 0;
+    		$v['users'] = [];
+    		foreach($users as $u){
+    			if($v['project_id'] == $u['project_id']){
+    				array_push($v['users'],['user_id'=>$u['user_id'],'username'=>$u['username'],'curr_company'=>$u['curr_company'],'user_src_id'=>$u['user_src_id'],'user_access_url'=>$u['user_access_url'],'tags'=>$u['tags']]);
+    				$v['patten_num'] = $v['patten_num'] + 1;
+    			}
+    		}
+    	}
+//  	dump($res);
+    	$ret['pinfo'] = $res;
+    	return json_encode($ret);
+    }
+    
     public function get_user_part_info(){
     	$ret = [
     		'r' => 0,
